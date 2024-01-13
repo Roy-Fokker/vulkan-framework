@@ -21,10 +21,18 @@ target_compile_definitions(${PRJ_LIB_NAME}
 		VK_USE_PLATFORM_WIN32_KHR   # On Windows, Vulkan needs this.
 )
 
+# precompile headers for this library
+target_precompile_headers(${PRJ_LIB_NAME} 
+	PRIVATE
+		pch.hpp
+)
+
 # source files for this app
 target_sources(${PRJ_LIB_NAME}
-	PUBLIC
-		main.cpp
+	PUBLIC FILE_SET vfw_modules TYPE CXX_MODULES FILES
+		vulkan-framework.ixx
+		renderer.ixx
+		instance.ixx
 )
 
 # libraries used by vke
