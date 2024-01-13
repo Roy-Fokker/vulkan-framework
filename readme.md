@@ -1,4 +1,5 @@
-# C++23 Project Template
+# Vulkan Framework for toy projects
+based on C++23 Project Template
 
 ## Uses
 - vcpkg for package management
@@ -9,5 +10,6 @@
 - enabling standard module 
 - enabling modules
 
-## Example project
-- uses fmt from vcpkg
+## project dependencies
+- fmt
+- vulkan
