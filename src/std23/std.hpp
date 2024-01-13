@@ -110,7 +110,7 @@
 #include <cwchar>
 #include <cwctype>
 
-#ifdef WIN32
+#ifdef INCLUDE_WINDOWS
 #pragma warning(push)
 #pragma warning(disable : 5105)
 #include <Windows.h>
