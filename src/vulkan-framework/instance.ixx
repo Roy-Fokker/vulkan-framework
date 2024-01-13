@@ -10,12 +10,16 @@ export namespace vfw
 		instance(HWND window_handle);
 		~instance();
 
+		instance() = delete;
+
 	private:
 		void create_instance(HWND window_handle);
 		void setup_debug_callback();
 		void create_surface(HWND window_handle);
 
 		vk::Instance vk_instance;
+		vk::DebugUtilsMessengerEXT debug_messenger;
+		vk::SurfaceKHR vk_surface;
 	};
 }
 
@@ -24,6 +28,7 @@ using namespace std::string_view_literals;
 
 namespace
 {
+	// TODO: figure out constexpr/consteval way to do this.
 	const auto wanted_instance_extensions = [] {
 		auto exts = std::vector<std::string>{
 			VK_KHR_SURFACE_EXTENSION_NAME,
@@ -37,6 +42,7 @@ namespace
 		return exts;
 	}();
 
+	// TODO: figure out constexpr/consteval way to do this.
 	const auto wanted_instance_layers = [] {
 		auto lyrs = std::vector<std::string>{
 #ifdef _DEBUG
@@ -47,6 +53,7 @@ namespace
 		return lyrs;
 	}();
 
+	// TODO: would be better if output was vector<const char *>
 	auto get_installed_extensions() -> std::vector<std::string>
 	{
 		auto exts = vk::enumerateInstanceExtensionProperties();
@@ -61,6 +68,7 @@ namespace
 		return out;
 	}
 
+	// TODO: would be better if output was vector<const char *>
 	auto get_installed_layers() -> std::vector<std::string>
 	{
 		auto lyrs = vk::enumerateInstanceLayerProperties();
@@ -75,6 +83,7 @@ namespace
 		return out;
 	}
 
+	// TODO: there has to be a better way to do this.
 	auto convert_to_vec_char(std::vector<std::string> &in) -> std::vector<const char *>
 	{
 		auto out = std::vector<const char *>{};
@@ -92,12 +101,55 @@ namespace
 		auto name = ""s;
 
 		name.resize(len);
-		GetWindowTextA(handle, &name[0], static_cast<int>(len));
+		GetWindowTextA(handle, &name[0], static_cast<int>(len)); // has to be explicit call to xxA function because Vulkan expect char array.
 		name.resize(len - 1);
 
 		return name;
 	}
 }
+
+#ifdef _DEBUG
+static auto debug_callback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
+                           [[maybe_unused]] VkDebugUtilsMessageTypeFlagsEXT messageType,
+                           const VkDebugUtilsMessengerCallbackDataEXT *pCallbackData,
+                           [[maybe_unused]] void *pUserData)
+	-> vk::Bool32
+{
+	if (messageSeverity > VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT)
+	{
+		std::println("Debug Message: {}\n", pCallbackData->pMessage);
+	}
+	return VK_FALSE;
+}
+
+extern auto vkCreateDebugUtilsMessengerEXT(VkInstance instance,
+                                           const VkDebugUtilsMessengerCreateInfoEXT *pCreateInfo,
+                                           const VkAllocationCallbacks *pAllocator,
+                                           VkDebugUtilsMessengerEXT *pDebugMessenger)
+	-> VkResult
+{
+	auto func = (PFN_vkCreateDebugUtilsMessengerEXT)vkGetInstanceProcAddr(instance, "vkCreateDebugUtilsMessengerEXT");
+	if (func != nullptr)
+	{
+		return func(instance, pCreateInfo, pAllocator, pDebugMessenger);
+	}
+	else
+	{
+		return VK_ERROR_EXTENSION_NOT_PRESENT;
+	}
+}
+
+extern void vkDestroyDebugUtilsMessengerEXT(VkInstance instance,
+                                            VkDebugUtilsMessengerEXT debugMessenger,
+                                            const VkAllocationCallbacks *pAllocator)
+{
+	auto func = (PFN_vkDestroyDebugUtilsMessengerEXT)vkGetInstanceProcAddr(instance, "vkDestroyDebugUtilsMessengerEXT");
+	if (func != nullptr)
+	{
+		func(instance, debugMessenger, pAllocator);
+	}
+}
+#endif
 
 using namespace vfw;
 
@@ -114,6 +166,12 @@ instance::instance(HWND window_handle)
 
 instance::~instance()
 {
+	vk_instance.destroySurfaceKHR(vk_surface);
+
+#ifdef _DEBUG
+	vk_instance.destroyDebugUtilsMessengerEXT(debug_messenger);
+#endif
+
 	vk_instance.destroy();
 }
 
@@ -135,6 +193,16 @@ void instance::create_instance(const HWND window_handle)
 		return lyrs;
 	};
 
+	auto get_exts = [&]() {
+		auto installed_extensions = get_installed_extensions();
+		auto available_extensions = std::vector<std::string>{};
+		std::ranges::set_intersection(installed_extensions, wanted_instance_extensions, std::back_inserter(available_extensions));
+
+		auto exts = convert_to_vec_char(available_extensions);
+
+		return exts;
+	};
+
 	auto app_info = vk::ApplicationInfo{
 		.pApplicationName   = name.data(),
 		.applicationVersion = version,
@@ -143,12 +211,8 @@ void instance::create_instance(const HWND window_handle)
 		.apiVersion         = VK_API_VERSION_1_3
 	};
 
-	auto installed_extensions = get_installed_extensions();
-	auto available_extensions = std::vector<std::string>{};
-	std::ranges::set_intersection(installed_extensions, wanted_instance_extensions, std::back_inserter(available_extensions));
-	auto exts = convert_to_vec_char(available_extensions);
-
 	auto lyrs = get_layers();
+	auto exts = get_exts();
 
 	auto create_info = vk::InstanceCreateInfo{
 		.pApplicationInfo        = &app_info,
@@ -171,8 +235,24 @@ void instance::create_instance(const HWND window_handle)
 
 void instance::setup_debug_callback()
 {
+	using sev  = vk::DebugUtilsMessageSeverityFlagBitsEXT;
+	using type = vk::DebugUtilsMessageTypeFlagBitsEXT;
+
+	auto createInfo = vk::DebugUtilsMessengerCreateInfoEXT{
+		.messageSeverity = { sev::eWarning | sev::eError },
+		.messageType     = { type::eGeneral | type::ePerformance | type::eValidation },
+		.pfnUserCallback = &debug_callback
+	};
+
+	debug_messenger = vk_instance.createDebugUtilsMessengerEXT(createInfo);
 }
 
 void instance::create_surface([[maybe_unused]] HWND window_handle)
 {
+	auto create_info = vk::Win32SurfaceCreateInfoKHR{
+		.hinstance = GetModuleHandle(nullptr),
+		.hwnd      = window_handle
+	};
+
+	vk_surface = vk_instance.createWin32SurfaceKHR(create_info);
 }
