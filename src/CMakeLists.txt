@@ -1,7 +1,7 @@
 # find vcpkg installed library
 find_package(fmt CONFIG REQUIRED)
 
-set(PRJ_EXE_NAME "cpp23-application")
+set(PRJ_EXE_NAME "vfw-application")
 
 # create executable for initial setup
 add_executable(${PRJ_EXE_NAME})

@@ -1,6 +1,6 @@
 {
 	"$schema": "https://raw.githubusercontent.com/microsoft/vcpkg-tool/main/docs/vcpkg.schema.json",
-	"name": "cpp23-project-template",
+	"name": "vulkan-framework",
 	"version": "0.0.1",
 	"dependencies": [
 		"fmt"

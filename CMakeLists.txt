@@ -7,9 +7,9 @@ cmake_policy(SET CMP0087 NEW)
 # include(cmake/glsl_compiler.cmake)
 
 # project and language to be used
-project(cpp23-project-template
+project(vulkan-framework
 	LANGUAGES CXX
-	HOMEPAGE_URL "https://roy-fokker.github.io/cpp23-project-template/"
+	HOMEPAGE_URL "https://roy-fokker.github.io/vulkan-framework/"
 	DESCRIPTION "C++23 based Project Template.")
 
 # Enable scan for dependencies
