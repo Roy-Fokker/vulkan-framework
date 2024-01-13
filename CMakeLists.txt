@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.27)
+cmake_minimum_required(VERSION 3.28)
 
 # Enable policy to make vcpkg copy dll/so to build directory
 cmake_policy(SET CMP0087 NEW)
@@ -20,6 +20,11 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_CXX_STANDARD 23)
 set(CXX_STANDARD_REQUIRED ON)
 
+# library source folder
+add_subdirectory(src/std23)
+
+# library source folder
+add_subdirectory(src/vulkan-framework)
 
 # executable source folder
-add_subdirectory(src)
+add_subdirectory(src/vfw-application)
