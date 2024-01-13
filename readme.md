@@ -5,10 +5,11 @@ based on C++23 Project Template
 - vcpkg for package management
 - ninja for build engine
 - cmake with cmakepresets for build generator
+- C++ Modules, where possible
 
 ## to be figured out
 - enabling standard module 
-- enabling modules
+
 
 ## project dependencies
 - fmt

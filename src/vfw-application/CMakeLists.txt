@@ -22,7 +22,11 @@ target_compile_definitions(${PRJ_EXE_NAME}
 # source files for this application
 target_sources(${PRJ_EXE_NAME}
 	PRIVATE
-		main.cpp)
+		main.cpp
+
+	PRIVATE FILE_SET app_modules TYPE CXX_MODULES FILES
+		input.ixx
+		window.ixx)
 
 # libraries used by this application
 target_link_libraries(${PRJ_EXE_NAME}
