@@ -22,11 +22,12 @@ export namespace vfw
 			create_images();
 			create_renderpass();
 			create_frame_buffers();
+
+			std::println("Frame Image Count: {}", vk_image_views.size());
 		}
 
 		~swap_chain()
 		{
-
 			destroy_frame_buffers();
 			destroy_images();
 			vk_device.destroyRenderPass(vk_render_pass);
@@ -38,6 +39,11 @@ export namespace vfw
 		[[nodiscard]] auto get() const -> const vk::SwapchainKHR &
 		{
 			return vk_swap_chain;
+		}
+
+		[[nodiscard]] auto get_image_count() const -> uint32_t
+		{
+			return static_cast<uint32_t>(vk_image_views.size());
 		}
 
 		[[nodiscard]] auto get_render_pass() const -> const vk::RenderPass &
