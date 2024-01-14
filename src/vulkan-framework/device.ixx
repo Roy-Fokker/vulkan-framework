@@ -15,9 +15,9 @@ export namespace vfw
 		device() = delete;
 
 		[[nodiscard]] auto get_queue_family() const -> queue_family;
-		auto get_device() -> vk::Device &;
-		auto get_physical_device() -> vk::PhysicalDevice &;
-		auto get_queues() -> std::tuple<vk::Queue &, vk::Queue &>;
+		auto get_device() const -> const vk::Device &;
+		auto get_physical_device() const -> const vk::PhysicalDevice &;
+		auto get_queues() const -> std::tuple<const vk::Queue &, const vk::Queue &>;
 
 	private:
 		void pick_physical_device(const instance *vfw_inst);
@@ -123,17 +123,17 @@ auto device::get_queue_family() const -> queue_family
 	return qf;
 }
 
-auto device::get_device() -> vk::Device &
+auto device::get_device() const -> const vk::Device &
 {
 	return vk_logical_device;
 }
 
-auto device::get_physical_device() -> vk::PhysicalDevice &
+auto device::get_physical_device() const -> const vk::PhysicalDevice &
 {
 	return vk_physical_device;
 }
 
-auto device::get_queues() -> std::tuple<vk::Queue &, vk::Queue &>
+auto device::get_queues() const -> std::tuple<const vk::Queue &, const vk::Queue &>
 {
 	return {
 		vk_graphics_queue,

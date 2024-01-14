@@ -32,6 +32,7 @@ export namespace vfw
 		auto list_physical_devices() const;
 		auto query_surface_details(const vk::PhysicalDevice &device) const -> surface_details;
 		auto find_queue_family(const vk::PhysicalDevice &device) const -> queue_family;
+		auto get_surface() const -> const vk::SurfaceKHR &;
 		auto get_layers() const -> std::vector<const char *>;
 
 	private:
@@ -189,17 +190,17 @@ auto queue_family::get_array() const -> std::vector<vk::DeviceQueueCreateInfo>
 	if (graphics_family.has_value())
 	{
 		out.emplace_back(vk::DeviceQueueCreateInfo{
-		  .queueFamilyIndex = static_cast<uint32_t>(graphics_family.value()),
-		  .queueCount       = 1,
-		  .pQueuePriorities = &queue_priority });
+			.queueFamilyIndex = static_cast<uint32_t>(graphics_family.value()),
+			.queueCount       = 1,
+			.pQueuePriorities = &queue_priority });
 	}
 
 	if (is_complete() and present_family.value() != graphics_family.value())
 	{
 		out.emplace_back(vk::DeviceQueueCreateInfo{
-		  .queueFamilyIndex = static_cast<uint32_t>(present_family.value()),
-		  .queueCount       = 1,
-		  .pQueuePriorities = &queue_priority });
+			.queueFamilyIndex = static_cast<uint32_t>(present_family.value()),
+			.queueCount       = 1,
+			.pQueuePriorities = &queue_priority });
 	}
 
 	return out;
@@ -234,6 +235,11 @@ instance::~instance()
 // 		vk_surface
 // 	};
 // }
+
+auto instance::get_surface() const -> const vk::SurfaceKHR &
+{
+	return vk_surface;
+}
 
 auto instance::list_physical_devices() const
 {
