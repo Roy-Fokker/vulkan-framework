@@ -13,6 +13,12 @@ export namespace vfw
 		{
 			pick_physical_device(vfw_inst);
 			create_logical_device(vfw_inst);
+
+			auto props = vk_physical_device.getProperties2();
+			std::println("Device Name: {}, Vulkan API: {}.{}",
+			             props.properties.deviceName.data(),
+			             vk::apiVersionMajor(props.properties.apiVersion),
+			             vk::apiVersionMinor(props.properties.apiVersion));
 		}
 		~device()
 		{
