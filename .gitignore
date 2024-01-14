@@ -56,3 +56,6 @@
 
 # other files/folders
 .DS_Store
+
+# ignore clangd folders
+.cache/
