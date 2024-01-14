@@ -34,6 +34,7 @@ target_sources(${PRJ_LIB_NAME}
 		renderer.ixx
 		instance.ixx
 		device.ixx
+		swap_chain.ixx
 )
 
 # libraries used by vke
