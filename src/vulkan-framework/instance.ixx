@@ -4,6 +4,22 @@ export module vfw:instance;
 
 export namespace vfw
 {
+	struct surface_details
+	{
+		vk::SurfaceCapabilitiesKHR capabilities;
+		std::vector<vk::SurfaceFormatKHR> formats;
+		std::vector<vk::PresentModeKHR> present_modes;
+	};
+
+	struct queue_family
+	{
+		std::optional<uint32_t> graphics_family;
+		std::optional<uint32_t> present_family;
+
+		[[nodiscard]] auto is_complete() const -> bool;
+		[[nodiscard]] auto get_array() const -> std::vector<vk::DeviceQueueCreateInfo>;
+	};
+
 	class instance
 	{
 	public:
@@ -11,6 +27,12 @@ export namespace vfw
 		~instance();
 
 		instance() = delete;
+
+		// auto get() const -> std::tuple<const vk::Instance &, const vk::SurfaceKHR &>;
+		auto list_physical_devices() const;
+		auto query_surface_details(const vk::PhysicalDevice &device) const -> surface_details;
+		auto find_queue_family(const vk::PhysicalDevice &device) const -> queue_family;
+		auto get_layers() const -> std::vector<const char *>;
 
 	private:
 		void create_instance(HWND window_handle);
@@ -106,6 +128,7 @@ namespace
 
 		return name;
 	}
+
 }
 
 #ifdef _DEBUG
@@ -153,6 +176,35 @@ extern void vkDestroyDebugUtilsMessengerEXT(VkInstance instance,
 
 using namespace vfw;
 
+auto queue_family::is_complete() const -> bool
+{
+	return graphics_family.has_value() and present_family.has_value();
+}
+
+auto queue_family::get_array() const -> std::vector<vk::DeviceQueueCreateInfo>
+{
+	auto out            = std::vector<vk::DeviceQueueCreateInfo>{};
+	auto queue_priority = 1.0f;
+
+	if (graphics_family.has_value())
+	{
+		out.emplace_back(vk::DeviceQueueCreateInfo{
+		  .queueFamilyIndex = static_cast<uint32_t>(graphics_family.value()),
+		  .queueCount       = 1,
+		  .pQueuePriorities = &queue_priority });
+	}
+
+	if (is_complete() and present_family.value() != graphics_family.value())
+	{
+		out.emplace_back(vk::DeviceQueueCreateInfo{
+		  .queueFamilyIndex = static_cast<uint32_t>(present_family.value()),
+		  .queueCount       = 1,
+		  .pQueuePriorities = &queue_priority });
+	}
+
+	return out;
+}
+
 instance::instance(HWND window_handle)
 {
 	create_instance(window_handle);
@@ -175,6 +227,70 @@ instance::~instance()
 	vk_instance.destroy();
 }
 
+// auto instance::get() const -> std::tuple<const vk::Instance &, const vk::SurfaceKHR &>
+// {
+// 	return {
+// 		vk_instance,
+// 		vk_surface
+// 	};
+// }
+
+auto instance::list_physical_devices() const
+{
+	return vk_instance.enumeratePhysicalDevices();
+}
+
+auto instance::query_surface_details(const vk::PhysicalDevice &device) const -> surface_details
+{
+	return surface_details{
+		.capabilities  = device.getSurfaceCapabilitiesKHR(vk_surface),
+		.formats       = device.getSurfaceFormatsKHR(vk_surface),
+		.present_modes = device.getSurfacePresentModesKHR(vk_surface)
+	};
+}
+
+auto instance::find_queue_family(const vk::PhysicalDevice &device) const -> queue_family
+{
+	auto out = queue_family{};
+
+	auto queue_families = device.getQueueFamilyProperties();
+
+	auto queue_family_iter = std::ranges::find_if(queue_families, [&](vk::QueueFamilyProperties &qf) -> bool {
+		return static_cast<bool>(qf.queueFlags & vk::QueueFlagBits::eGraphics);
+	});
+
+	if (queue_family_iter != queue_families.end())
+	{
+		out.graphics_family = static_cast<uint32_t>(std::distance(queue_families.begin(), queue_family_iter));
+	}
+
+	auto queue_idx{ 0 };
+	queue_family_iter = std::ranges::find_if(queue_families, [&]([[maybe_unused]] vk::QueueFamilyProperties &qf) -> bool {
+		auto present_support = device.getSurfaceSupportKHR(queue_idx, vk_surface);
+		queue_idx++;
+
+		return static_cast<bool>(present_support);
+	});
+
+	if (queue_family_iter != queue_families.end())
+	{
+		out.present_family = static_cast<uint32_t>(std::distance(queue_families.begin(), queue_family_iter));
+	}
+
+	return out;
+}
+
+auto instance::get_layers() const -> std::vector<const char *>
+{
+	auto installed_layers = get_installed_layers();
+	auto available_layers = std::vector<std::string>{};
+	std::ranges::set_intersection(installed_layers, wanted_instance_layers, std::back_inserter(available_layers));
+
+	auto lyrs = convert_to_vec_char(available_layers);
+
+	return lyrs;
+}
+
 void instance::create_instance(const HWND window_handle)
 {
 	const auto name    = get_window_name(window_handle);
@@ -182,16 +298,6 @@ void instance::create_instance(const HWND window_handle)
 	const auto engine  = "VulkanFramework"sv;
 
 	std::println("Window Name: {}, Version, {}, Engine Name: {}", name, version, engine);
-
-	auto get_layers = [&]() {
-		auto installed_layers = get_installed_layers();
-		auto available_layers = std::vector<std::string>{};
-		std::ranges::set_intersection(installed_layers, wanted_instance_layers, std::back_inserter(available_layers));
-
-		auto lyrs = convert_to_vec_char(available_layers);
-
-		return lyrs;
-	};
 
 	auto get_exts = [&]() {
 		auto installed_extensions = get_installed_extensions();

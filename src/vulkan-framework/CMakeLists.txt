@@ -33,6 +33,7 @@ target_sources(${PRJ_LIB_NAME}
 		vulkan-framework.ixx
 		renderer.ixx
 		instance.ixx
+		device.ixx
 )
 
 # libraries used by vke
