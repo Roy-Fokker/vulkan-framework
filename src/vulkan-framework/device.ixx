@@ -9,15 +9,40 @@ export namespace vfw
 	class device
 	{
 	public:
-		explicit device(const instance *vfw_inst);
-		~device();
+		explicit device(const instance *vfw_inst)
+		{
+			pick_physical_device(vfw_inst);
+			create_logical_device(vfw_inst);
+		}
+		~device()
+		{
+			vk_logical_device.destroy();
+		}
 
 		device() = delete;
 
-		[[nodiscard]] auto get_queue_family() const -> queue_family;
-		auto get_device() const -> const vk::Device &;
-		auto get_physical_device() const -> const vk::PhysicalDevice &;
-		auto get_queues() const -> std::tuple<const vk::Queue &, const vk::Queue &>;
+		[[nodiscard]] auto get_queue_family() const -> queue_family
+		{
+			return qf;
+		}
+
+		auto get_device() const -> const vk::Device &
+		{
+			return vk_logical_device;
+		}
+
+		auto get_physical_device() const -> const vk::PhysicalDevice &
+		{
+			return vk_physical_device;
+		}
+
+		auto get_queues() const -> std::tuple<const vk::Queue &, const vk::Queue &>
+		{
+			return {
+				vk_graphics_queue,
+				vk_present_queue
+			};
+		}
 
 	private:
 		void pick_physical_device(const instance *vfw_inst);
@@ -60,17 +85,6 @@ namespace
 }
 
 using namespace vfw;
-
-device::device(const instance *vfw_inst)
-{
-	pick_physical_device(vfw_inst);
-	create_logical_device(vfw_inst);
-}
-
-device::~device()
-{
-	vk_logical_device.destroy();
-}
 
 void device::pick_physical_device(const instance *vfw_inst)
 {
@@ -116,27 +130,4 @@ void device::create_logical_device(const instance *vfw_inst)
 
 	vk_graphics_queue = vk_logical_device.getQueue(qf.graphics_family.value(), 0);
 	vk_present_queue  = vk_logical_device.getQueue(qf.present_family.value(), 0);
-}
-
-auto device::get_queue_family() const -> queue_family
-{
-	return qf;
-}
-
-auto device::get_device() const -> const vk::Device &
-{
-	return vk_logical_device;
-}
-
-auto device::get_physical_device() const -> const vk::PhysicalDevice &
-{
-	return vk_physical_device;
-}
-
-auto device::get_queues() const -> std::tuple<const vk::Queue &, const vk::Queue &>
-{
-	return {
-		vk_graphics_queue,
-		vk_present_queue
-	};
 }
