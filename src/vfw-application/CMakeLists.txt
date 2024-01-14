@@ -1,5 +1,5 @@
 # find vcpkg installed library
-find_package(fmt CONFIG REQUIRED)
+# find_package(fmt CONFIG REQUIRED)
 
 # set application name variable
 set(PRJ_EXE_NAME "vfw-application")
@@ -33,5 +33,4 @@ target_sources(${PRJ_EXE_NAME}
 target_link_libraries(${PRJ_EXE_NAME}
 	PRIVATE
 		std23
-		fmt::fmt
 		vulkan-framework)

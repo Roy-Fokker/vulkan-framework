@@ -160,7 +160,7 @@ void swap_chain::create_images()
 				.b = vk::ComponentSwizzle::eIdentity,
 				.a = vk::ComponentSwizzle::eIdentity,
 			},
-			.subresourceRange = { .aspectMask = vk::ImageAspectFlagBits::eColor, .baseMipLevel = 0, .levelCount = 1, .baseArrayLayer = 0, .layerCount = 1 }
+			.subresourceRange = { .aspectMask = vk::ImageAspectFlagBits::eColor, .baseMipLevel = 0, .levelCount = 1, .baseArrayLayer = 0, .layerCount = 1 },
 		};
 
 		image_view = vk_device.createImageView(create_info);

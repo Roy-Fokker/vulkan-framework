@@ -12,5 +12,4 @@ based on C++23 Project Template
 
 
 ## project dependencies
-- fmt
 - vulkan

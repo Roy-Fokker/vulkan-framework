@@ -1,5 +1,3 @@
-#include <fmt/core.h>
-
 import input;
 import window;
 import application;
