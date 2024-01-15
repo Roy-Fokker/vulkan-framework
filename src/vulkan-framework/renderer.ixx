@@ -52,11 +52,7 @@ export namespace vfw
 			result = dev.waitForFences(in_flight_fence, true, UINT64_MAX);
 
 			std::tie(result, image_index) = dev.acquireNextImageKHR(sc, UINT64_MAX, image_available_semaphore, VK_NULL_HANDLE);
-			if (result == vk::Result::eErrorOutOfDateKHR or result == vk::Result::eSuboptimalKHR)
-			{
-				std::println("Did window resize?");
-				return;
-			}
+			resize_check(result, 1);
 
 			dev.resetFences(in_flight_fence);
 
@@ -87,6 +83,7 @@ export namespace vfw
 
 			gq.submit({ submit_info }, in_flight_fence);
 			result = pq.presentKHR(present_info);
+			resize_check(result, 2);
 
 			current_frame = (current_frame + 1) % max_frames_in_flight; // 0 ... max_frame
 		}
@@ -189,6 +186,31 @@ export namespace vfw
 			{
 			}
 			cb.endRenderPass();
+		}
+
+		void resize_check(vk::Result result, uint8_t result_point)
+		{
+			switch (result)
+			{
+				using enum vk::Result;
+			case eSuccess:
+				break;
+			case eErrorOutOfDateKHR:
+				// Resize SurfaceKHR
+				std::println("{} Resize?: {}", result_point, vk::to_string(result));
+				break;
+			case eSuboptimalKHR:
+				// Resize Swapchain
+				std::println("{} Resize?: {}", result_point, vk::to_string(result));
+				break;
+			case eErrorDeviceLost:
+				// Rebuild SurfaceKHR
+				std::println("{} Resize?: {}", result_point, vk::to_string(result));
+				break;
+			default:
+				std::println("{} Unknown Error: {}", result_point, vk::to_string(result));
+				break;
+			}
 		}
 
 	private:
