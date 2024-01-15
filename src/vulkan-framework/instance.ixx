@@ -128,7 +128,15 @@ export namespace vfw
 	private:
 		void create_instance(HWND window_handle);
 		void setup_debug_callback();
-		void create_surface(HWND window_handle);
+		void create_surface(HWND window_handle)
+		{
+			auto create_info = vk::Win32SurfaceCreateInfoKHR{
+				.hinstance = GetModuleHandle(nullptr),
+				.hwnd      = window_handle
+			};
+
+			vk_surface = vk_instance.createWin32SurfaceKHR(create_info);
+		}
 
 		vk::Instance vk_instance;
 		vk::DebugUtilsMessengerEXT debug_messenger;
@@ -338,14 +346,4 @@ void instance::setup_debug_callback()
 	};
 
 	debug_messenger = vk_instance.createDebugUtilsMessengerEXT(createInfo);
-}
-
-void instance::create_surface([[maybe_unused]] HWND window_handle)
-{
-	auto create_info = vk::Win32SurfaceCreateInfoKHR{
-		.hinstance = GetModuleHandle(nullptr),
-		.hwnd      = window_handle
-	};
-
-	vk_surface = vk_instance.createWin32SurfaceKHR(create_info);
 }
