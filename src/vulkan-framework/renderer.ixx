@@ -33,6 +33,11 @@ export namespace vfw
 			ldevice.destroyCommandPool(command_pool);
 		}
 
+		void set_clear_color(const std::array<float, 4> &color)
+		{
+			clear_color = color;
+		}
+
 		void draw_frame()
 		{
 			auto result                    = vk::Result{};
@@ -166,8 +171,8 @@ export namespace vfw
 		void record_renderpass(vk::CommandBuffer &cb, uint32_t image_index)
 		{
 			auto extent      = vk_swap_chain->get_extent();
-			auto clear_color = vk::ClearValue{
-				.color = std::array{ 0.2f, 0.2f, 0.4f, 1.f }
+			auto clear_value = vk::ClearValue{
+				.color = clear_color
 			};
 
 			auto rp_begin_info = vk::RenderPassBeginInfo{
@@ -177,7 +182,7 @@ export namespace vfw
 					 .offset = { 0, 0 },
 					 .extent = extent },
 				.clearValueCount = 1,
-				.pClearValues    = &clear_color,
+				.pClearValues    = &clear_value,
 			};
 
 			cb.beginRenderPass(rp_begin_info, vk::SubpassContents::eInline);
@@ -200,5 +205,7 @@ export namespace vfw
 		std::vector<vk::Semaphore> image_available_semaphores;
 		std::vector<vk::Semaphore> render_finished_semaphores;
 		std::vector<vk::Fence> in_flight_fences;
+
+		std::array<float, 4> clear_color = { 0.2f, 0.2f, 0.4f, 1.f };
 	};
 }

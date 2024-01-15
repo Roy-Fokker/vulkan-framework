@@ -22,6 +22,8 @@ auto main() -> int
 
 	auto rndr = vfw::renderer(wnd.handle());
 
+	rndr.set_clear_color({ 0.4f, 0.4f, 0.2f, 1.f });
+
 	while (wnd.handle() and app.should_continue())
 	{
 		// TODO: Create a clock class to get delta_time and total_time
