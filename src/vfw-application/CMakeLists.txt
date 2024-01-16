@@ -32,5 +32,7 @@ target_sources(${PRJ_EXE_NAME}
 # libraries used by this application
 target_link_libraries(${PRJ_EXE_NAME}
 	PRIVATE
-		std23
-		vulkan-framework)
+		std23             # precompiled header for C++ 23 Standard Libary
+		vulkan-framework  # our vulkan framework
+		shaders           # glsl/hlsl shaders to use
+)

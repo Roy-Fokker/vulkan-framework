@@ -4,6 +4,26 @@ import application;
 
 import vfw;
 
+auto read_file(const std::filesystem::path &filename) -> std::vector<uint32_t>
+{
+	auto file = std::ifstream(filename, std::ios::ate | std::ios::binary);
+
+	if (not file.is_open())
+	{
+		throw std::runtime_error("failed to open file!");
+	}
+
+	auto file_size = file.tellg();
+	auto buffer    = std::vector<uint32_t>(file_size);
+
+	file.seekg(0);
+	file.read(reinterpret_cast<char *>(buffer.data()), file_size);
+
+	file.close();
+
+	return buffer;
+}
+
 auto main() -> int
 {
 	using namespace std::string_view_literals;
@@ -23,6 +43,9 @@ auto main() -> int
 	auto rndr = vfw::renderer(wnd.handle());
 
 	rndr.set_clear_color({ 0.4f, 0.4f, 0.2f, 1.f });
+
+	auto vert_shader_bin = read_file("shaders/simple_shader.vert.spv");
+	auto frag_shader_bin = read_file("shaders/simple_shader.frag.spv");
 
 	while (wnd.handle() and app.should_continue())
 	{

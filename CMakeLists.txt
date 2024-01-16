@@ -18,7 +18,14 @@ set(CXX_SCAN_FOR_MODULES ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 # force C++ version to 23
 set(CMAKE_CXX_STANDARD 23)
+# standard is required
 set(CXX_STANDARD_REQUIRED ON)
+
+# include logic to build glsl files
+include(cmake/glsl_compiler.cmake)
+
+# shader source folder
+add_subdirectory(src/shaders)
 
 # library source folder
 add_subdirectory(src/std23)
