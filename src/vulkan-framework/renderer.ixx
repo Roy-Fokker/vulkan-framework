@@ -5,9 +5,12 @@ export module vfw:renderer;
 import :instance;
 import :device;
 import :swap_chain;
+import :pipeline;
 
 export namespace vfw
 {
+	using pipeline_description = pipeline::description;
+
 	class renderer
 	{
 	public:
@@ -36,6 +39,13 @@ export namespace vfw
 		void set_clear_color(const std::array<float, 4> &color)
 		{
 			clear_color = color;
+		}
+
+		void add_pipeline(const pipeline_description &desc)
+		{
+			auto ldevice = vk_device->get_device();
+			auto rp      = vk_swap_chain->get_render_pass();
+			gfx_pipeline = std::make_unique<pipeline>(ldevice, rp, desc);
 		}
 
 		void draw_frame()
@@ -184,6 +194,26 @@ export namespace vfw
 
 			cb.beginRenderPass(rp_begin_info, vk::SubpassContents::eInline);
 			{
+				cb.bindPipeline(vk::PipelineBindPoint::eGraphics, gfx_pipeline->get_pipeline());
+
+				auto viewport = vk::Viewport{
+					.x        = 0.0f,
+					.y        = 0.0f,
+					.width    = static_cast<float>(extent.width),
+					.height   = static_cast<float>(extent.height),
+					.minDepth = 0.0f,
+					.maxDepth = 1.0f
+				};
+				cb.setViewport(0, viewport);
+
+				auto scissor = vk::Rect2D{
+					.offset = { 0, 0 },
+					.extent = extent
+				};
+				cb.setScissor(0, scissor);
+
+				// TODO: make this based on vertex/object needs
+				cb.draw(3, 1, 0, 0);
 			}
 			cb.endRenderPass();
 		}
@@ -229,5 +259,7 @@ export namespace vfw
 		std::vector<vk::Fence> in_flight_fences;
 
 		std::array<float, 4> clear_color = { 0.2f, 0.2f, 0.4f, 1.f };
+
+		std::unique_ptr<pipeline> gfx_pipeline = nullptr;
 	};
 }

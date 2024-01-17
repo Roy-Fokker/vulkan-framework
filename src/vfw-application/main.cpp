@@ -47,6 +47,19 @@ auto main() -> int
 	auto vert_shader_bin = read_file("shaders/simple_shader.vert.spv");
 	auto frag_shader_bin = read_file("shaders/simple_shader.frag.spv");
 
+	auto simple_pipeline = vfw::pipeline_description{
+		.shaders = {
+			{ vk::ShaderStageFlagBits::eVertex, vert_shader_bin },
+			{ vk::ShaderStageFlagBits::eFragment, frag_shader_bin },
+		},
+		.topology     = { vk::PrimitiveTopology::eTriangleList },
+		.polygon_mode = { vk::PolygonMode::eFill },
+		.cull_mode    = { vk::CullModeFlagBits::eBack },
+		.front_face   = { vk::FrontFace::eClockwise },
+	};
+
+	rndr.add_pipeline(simple_pipeline);
+
 	while (wnd.handle() and app.should_continue())
 	{
 		// TODO: Create a clock class to get delta_time and total_time
