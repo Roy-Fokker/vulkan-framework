@@ -13,10 +13,12 @@ target_compile_features(${PRJ_EXE_NAME} PRIVATE cxx_std_23)
 # set preprocessor defines
 target_compile_definitions(${PRJ_EXE_NAME}
 	PRIVATE 
-		UNICODE _UNICODE
-		_CRT_SECURE_NO_WARNINGS
-		NOMINMAX 
-		WIN32_LEAN_AND_MEAN
+		UNICODE _UNICODE            # Tell compiler we are using UNICODE
+		_CRT_SECURE_NO_WARNINGS     # Don't want MSVC's CRT warnings
+		NOMINMAX                    # Don't want Window.h to define min and max macros
+		WIN32_LEAN_AND_MEAN         # Windows.h should only include the basics
+		VULKAN_HPP_NO_CONSTRUCTORS  # Vulkan.hpp should not define constructors for structs
+		VK_USE_PLATFORM_WIN32_KHR   # On Windows, Vulkan needs this.
 )
 
 # source files for this application
@@ -41,5 +43,5 @@ target_link_libraries(${PRJ_EXE_NAME}
 # precompiled headers 
 target_precompile_headers(${PRJ_EXE_NAME}
 	REUSE_FROM
-		vulkan-framework
+		vulkan-framework  # reuse the PCH file from this project
 )

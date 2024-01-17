@@ -23,7 +23,7 @@ target_compile_definitions(${PRJ_LIB_NAME}
 
 # precompile headers for this library
 target_precompile_headers(${PRJ_LIB_NAME} 
-	PRIVATE
+	PUBLIC
 		pch.hpp
 )
 
