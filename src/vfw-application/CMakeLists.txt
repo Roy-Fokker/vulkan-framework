@@ -1,5 +1,5 @@
 # find vcpkg installed library
-# find_package(fmt CONFIG REQUIRED)
+find_package(Vulkan REQUIRED)
 
 # set application name variable
 set(PRJ_EXE_NAME "vfw-application")
@@ -35,4 +35,11 @@ target_link_libraries(${PRJ_EXE_NAME}
 		std23             # precompiled header for C++ 23 Standard Libary
 		vulkan-framework  # our vulkan framework
 		shaders           # glsl/hlsl shaders to use
+		Vulkan::Vulkan    # Vulkan SDK
+)
+
+# precompiled headers 
+target_precompile_headers(${PRJ_EXE_NAME}
+	REUSE_FROM
+		vulkan-framework
 )
