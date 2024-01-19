@@ -13,6 +13,8 @@ export namespace vfw
 			using shader_stage_file = std::tuple<vk::ShaderStageFlagBits, shader_binary>;
 
 			std::vector<shader_stage_file> shaders; // Note: Do not have multiple items with same ShaderStageFlagBits value
+			std::span<const vk::VertexInputAttributeDescription> input_attributes;
+			std::span<const vk::VertexInputBindingDescription> input_bindings;
 			vk::PrimitiveTopology topology;
 			vk::PolygonMode polygon_mode;
 			vk::CullModeFlags cull_mode;
@@ -65,10 +67,11 @@ export namespace vfw
 			});
 			std::println("Shader Stage Count: {}", shader_stage_infos.size());
 
-			// TODO: Vertex Input Layout equivalent for Vulkan
 			auto vertex_input_info = vk::PipelineVertexInputStateCreateInfo{
-				.vertexBindingDescriptionCount   = 0,
-				.vertexAttributeDescriptionCount = 0,
+				.vertexBindingDescriptionCount   = static_cast<uint32_t>(desc.input_bindings.size()),
+				.pVertexBindingDescriptions      = desc.input_bindings.data(),
+				.vertexAttributeDescriptionCount = static_cast<uint32_t>(desc.input_attributes.size()),
+				.pVertexAttributeDescriptions    = desc.input_attributes.data(),
 			};
 
 			// Input Assembly
