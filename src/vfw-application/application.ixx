@@ -5,12 +5,15 @@ export module application;
 import input;
 import window;
 
+import vfw;
+
 export namespace app_base
 {
 	class application
 	{
 	public:
-		application()
+		application() = delete;
+		explicit application(vfw::renderer &rndr)
 		{
 			on_keypress = [&](input::button button_, std::uint16_t scan_code, bool isKeyDown, std::uint16_t repeat_count) -> bool {
 				std::println("⌚: {:>5.2f}s, ⏱️: {}ns, ⌨️: {:10.10}, 📑: {:>5}, 🔽: {:^5}, 🔁: {:>3}",

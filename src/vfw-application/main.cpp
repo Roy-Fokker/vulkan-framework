@@ -4,31 +4,9 @@ import application;
 
 import vfw;
 
-auto read_file(const std::filesystem::path &filename) -> std::vector<uint32_t>
-{
-	auto file = std::ifstream(filename, std::ios::ate | std::ios::binary);
-
-	if (not file.is_open())
-	{
-		throw std::runtime_error("failed to open file!");
-	}
-
-	auto file_size = file.tellg();
-	auto buffer    = std::vector<uint32_t>(file_size);
-
-	file.seekg(0);
-	file.read(reinterpret_cast<char *>(buffer.data()), file_size);
-
-	file.close();
-
-	return buffer;
-}
-
 auto main() -> int
 {
 	using namespace std::string_view_literals;
-
-	auto app = app_base::application();
 
 	auto wnd = win32::window({ .width  = 800,
 	                           .height = 600,
@@ -36,29 +14,12 @@ auto main() -> int
 
 	wnd.show();
 
+	auto rndr = vfw::renderer(wnd.handle());
+
+	auto app = app_base::application(rndr);
 	wnd.set_callback(app.on_keypress);
 	wnd.set_callback(app.on_resize);
 	wnd.set_callback(app.on_activate);
-
-	auto rndr = vfw::renderer(wnd.handle());
-
-	rndr.set_clear_color({ 0.4f, 0.4f, 0.2f, 1.f });
-
-	auto vert_shader_bin = read_file("shaders/simple_shader.vert.spv");
-	auto frag_shader_bin = read_file("shaders/simple_shader.frag.spv");
-
-	auto simple_pipeline = vfw::pipeline_description{
-		.shaders = {
-			{ vk::ShaderStageFlagBits::eVertex, vert_shader_bin },
-			{ vk::ShaderStageFlagBits::eFragment, frag_shader_bin },
-		},
-		.topology     = { vk::PrimitiveTopology::eTriangleList },
-		.polygon_mode = { vk::PolygonMode::eFill },
-		.cull_mode    = { vk::CullModeFlagBits::eBack },
-		.front_face   = { vk::FrontFace::eClockwise },
-	};
-
-	rndr.add_pipeline(simple_pipeline);
 
 	while (wnd.handle() and app.should_continue())
 	{
