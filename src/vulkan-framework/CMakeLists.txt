@@ -1,5 +1,6 @@
 # find vcpkg installed library
 find_package(Vulkan REQUIRED)
+find_package(glm CONFIG REQUIRED)
 
 # set library name variable
 set(PRJ_LIB_NAME "vulkan-framework")
@@ -19,6 +20,8 @@ target_compile_definitions(${PRJ_LIB_NAME}
 		WIN32_LEAN_AND_MEAN         # Windows.h should only include the basics
 		VULKAN_HPP_NO_CONSTRUCTORS  # Vulkan.hpp should not define constructors for structs
 		VK_USE_PLATFORM_WIN32_KHR   # On Windows, Vulkan needs this.
+		GLM_FORCE_DEPTH_ZERO_TO_ONE # GLM clip space should be in Z-axis to 0 to 1
+		GLM_FORCE_LEFT_HANDED       # GLM should use left-handed coordinates, +z goes into screen
 )
 
 # precompile headers for this library
@@ -43,4 +46,5 @@ target_link_libraries(${PRJ_LIB_NAME}
 	PRIVATE
 		std23
 		Vulkan::Vulkan
+		glm::glm
 )
