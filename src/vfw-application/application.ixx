@@ -9,6 +9,41 @@ import vfw;
 
 export namespace app_base
 {
+	struct vertex
+	{
+		glm::vec2 pos;
+		glm::vec3 colr;
+
+		constexpr static auto get_binding_descriptions()
+		{
+			return std::array{
+				vk::VertexInputBindingDescription{
+					.binding   = 0,
+					.stride    = sizeof(vertex),
+					.inputRate = vk::VertexInputRate::eVertex,
+				},
+			};
+		}
+
+		constexpr static auto get_attribute_descriptions()
+		{
+			return std::array{
+				vk::VertexInputAttributeDescription{
+					.location = 0,
+					.binding  = 0,
+					.format   = vk::Format::eR32G32Sfloat,
+					.offset   = offsetof(vertex, pos),
+				},
+				vk::VertexInputAttributeDescription{
+					.location = 1,
+					.binding  = 0,
+					.format   = vk::Format::eR32G32B32Sfloat,
+					.offset   = offsetof(vertex, colr),
+				},
+			};
+		}
+	};
+
 	class application
 	{
 	public:
@@ -48,6 +83,8 @@ export namespace app_base
 
 				return true;
 			};
+
+			setup_renderer(rndr);
 		}
 
 		void update(double delta_time, double total_time)
@@ -64,6 +101,65 @@ export namespace app_base
 		win32::window::keypress_callback on_keypress{};
 		win32::window::resize_callback on_resize{};
 		win32::window::activate_callback on_activate{};
+
+	private:
+		auto read_file(const std::filesystem::path &filename) -> std::vector<uint32_t>
+		{
+			auto file = std::ifstream(filename, std::ios::ate | std::ios::binary);
+
+			if (not file.is_open())
+			{
+				throw std::runtime_error("failed to open file!");
+			}
+
+			auto file_size = file.tellg();
+			auto buffer    = std::vector<uint32_t>(file_size);
+
+			file.seekg(0);
+			file.read(reinterpret_cast<char *>(buffer.data()), file_size);
+
+			file.close();
+
+			return buffer;
+		}
+
+		void setup_renderer(vfw::renderer &rndr)
+		{
+			rndr.set_clear_color({ 0.4f, 0.4f, 0.2f, 1.f });
+
+			auto vert_shader_bin = read_file("shaders/basic_shader.vert.spv");
+			auto frag_shader_bin = read_file("shaders/basic_shader.frag.spv");
+
+			auto simple_pipeline = vfw::pipeline_description{
+				.shaders = {
+					{ vk::ShaderStageFlagBits::eVertex, vert_shader_bin },
+					{ vk::ShaderStageFlagBits::eFragment, frag_shader_bin },
+				},
+				.input_attributes = vertex::get_attribute_descriptions(),
+				.input_bindings   = vertex::get_binding_descriptions(),
+				.topology         = { vk::PrimitiveTopology::eTriangleList },
+				.polygon_mode     = { vk::PolygonMode::eFill },
+				.cull_mode        = { vk::CullModeFlagBits::eBack },
+				.front_face       = { vk::FrontFace::eClockwise },
+			};
+
+			rndr.add_pipeline(simple_pipeline);
+
+			const std::vector<vertex> vertices = {
+				{ { 0.0f, -0.5f }, { 1.0f, 0.0f, 0.0f } },
+				{ { 0.5f, 0.5f }, { 0.0f, 1.0f, 0.0f } },
+				{ { -0.5f, 0.5f }, { 0.0f, 0.0f, 1.0f } }
+			};
+
+			auto vb_idx = rndr.add_buffer(vertices.size() * sizeof(vertex),
+			                              reinterpret_cast<const void *>(vertices.data()),
+			                              vk::BufferUsageFlagBits::eVertexBuffer,
+			                              vk::SharingMode::eExclusive);
+
+			rndr.draw_vb_cmd(vb_idx,
+			                 static_cast<uint32_t>(vertices.size()),
+			                 1, 0, 0);
+		}
 
 	private:
 		bool close = false;

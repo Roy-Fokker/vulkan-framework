@@ -39,6 +39,7 @@ target_sources(${PRJ_LIB_NAME}
 		device.ixx
 		swap_chain.ixx
 		pipeline.ixx
+		buffer.ixx
 )
 
 # libraries used by vke

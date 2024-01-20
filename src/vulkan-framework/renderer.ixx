@@ -6,6 +6,7 @@ import :instance;
 import :device;
 import :swap_chain;
 import :pipeline;
+import :buffer;
 
 export namespace vfw
 {
@@ -46,6 +47,37 @@ export namespace vfw
 			auto ldevice = vk_device->get_device();
 			auto rp      = vk_swap_chain->get_render_pass();
 			gfx_pipeline = std::make_unique<pipeline>(ldevice, rp, desc);
+		}
+
+		[[nodiscard]] auto add_buffer(size_t buffer_size,
+		                              const void *buffer_data,
+		                              vk::BufferUsageFlagBits usage,
+		                              vk::SharingMode sharing_mode)
+			-> uint32_t
+		{
+			gfx_buffers.emplace_back(vk_device.get(),
+			                         buffer::description{
+										 .buffer_size  = buffer_size,
+										 .buffer_data  = buffer_data,
+										 .usage        = usage,
+										 .sharing_mode = sharing_mode,
+									 });
+			return static_cast<uint32_t>(gfx_buffers.size() - 1);
+		}
+
+		void draw_vb_cmd(uint32_t buffer_idx,
+		                 uint32_t vertex_count,
+		                 uint32_t instance_count,
+		                 uint32_t vertex_offset,
+		                 uint32_t index_offset)
+		{
+			draw_vb_commands.push_back({
+				.buffer_idx     = buffer_idx,
+				.vertex_count   = vertex_count,
+				.instance_count = instance_count,
+				.vertex_offset  = vertex_offset,
+				.index_offset   = index_offset,
+			});
 		}
 
 		void draw_frame()
@@ -210,8 +242,13 @@ export namespace vfw
 				};
 				cb.setScissor(0, scissor);
 
-				// TODO: make this based on vertex/object needs
-				cb.draw(3, 1, 0, 0);
+				for (auto &vb : draw_vb_commands)
+				{
+					cb.bindVertexBuffers(0, // first binding
+					                     gfx_buffers.at(vb.buffer_idx).get_buffer(),
+					                     { 0 });
+					cb.draw(vb.vertex_count, vb.instance_count, vb.vertex_offset, vb.index_offset);
+				}
 			}
 			cb.endRenderPass();
 		}
@@ -263,5 +300,17 @@ export namespace vfw
 		std::array<float, 4> clear_color = { 0.2f, 0.2f, 0.4f, 1.f };
 
 		std::unique_ptr<pipeline> gfx_pipeline = nullptr;
+
+		std::vector<buffer> gfx_buffers;
+
+		struct draw_vb_data
+		{
+			uint32_t buffer_idx;
+			uint32_t vertex_count;
+			uint32_t instance_count;
+			uint32_t vertex_offset;
+			uint32_t index_offset;
+		};
+		std::vector<draw_vb_data> draw_vb_commands;
 	};
 }
