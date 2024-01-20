@@ -52,16 +52,16 @@ export namespace vfw
 		{
 			auto result                    = vk::Result{};
 			auto image_index               = 0u;
-			auto in_flight_fence           = in_flight_fences.at(current_frame);
-			auto image_available_semaphore = image_available_semaphores.at(current_frame);
-			auto render_finished_semaphore = render_finished_semaphores.at(current_frame);
+			auto in_flight_fence           = sync_objects.at(current_frame).in_flight;
+			auto image_available_semaphore = sync_objects.at(current_frame).image_available;
+			auto render_finished_semaphore = sync_objects.at(current_frame).render_finished;
 			auto command_buffer            = command_buffers.at(current_frame);
 			auto sc                        = vk_swap_chain->get();
 			auto dev                       = vk_device->get_device();
 
-			result = dev.waitForFences(in_flight_fence, true, UINT64_MAX);
+			result = dev.waitForFences(in_flight_fence, true, 1'000'000'000);
 
-			std::tie(result, image_index) = dev.acquireNextImageKHR(sc, UINT64_MAX, image_available_semaphore, VK_NULL_HANDLE);
+			std::tie(result, image_index) = dev.acquireNextImageKHR(sc, 1'000'000'000, image_available_semaphore, VK_NULL_HANDLE);
 			resize_check(result, 1);
 
 			dev.resetFences(in_flight_fence);
@@ -128,11 +128,9 @@ export namespace vfw
 		void create_synchronization_objects()
 		{
 			auto ldevice = vk_device->get_device();
-			image_available_semaphores.resize(max_frames_in_flight);
-			render_finished_semaphores.resize(max_frames_in_flight);
-			in_flight_fences.resize(max_frames_in_flight);
+			sync_objects.resize(max_frames_in_flight);
 
-			for (auto &&[image_available_semaphore, render_finished_semaphore, in_flight_fence] : std::views::zip(image_available_semaphores, render_finished_semaphores, in_flight_fences))
+			for (auto &&[image_available_semaphore, render_finished_semaphore, in_flight_fence] : sync_objects)
 			{
 				auto semaphore_ci         = vk::SemaphoreCreateInfo{};
 				image_available_semaphore = ldevice.createSemaphore(semaphore_ci);
@@ -149,7 +147,7 @@ export namespace vfw
 		{
 			auto ldevice = vk_device->get_device();
 
-			for (auto &&[image_available_semaphore, render_finished_semaphore, in_flight_fence] : std::views::zip(image_available_semaphores, render_finished_semaphores, in_flight_fences))
+			for (auto &&[image_available_semaphore, render_finished_semaphore, in_flight_fence] : sync_objects)
 			{
 				ldevice.destroyFence(in_flight_fence);
 				ldevice.destroySemaphore(render_finished_semaphore);
@@ -254,9 +252,13 @@ export namespace vfw
 		vk::CommandPool command_pool;
 		std::vector<vk::CommandBuffer> command_buffers;
 
-		std::vector<vk::Semaphore> image_available_semaphores;
-		std::vector<vk::Semaphore> render_finished_semaphores;
-		std::vector<vk::Fence> in_flight_fences;
+		struct frame_sync_data
+		{
+			vk::Semaphore image_available;
+			vk::Semaphore render_finished;
+			vk::Fence in_flight;
+		};
+		std::vector<frame_sync_data> sync_objects;
 
 		std::array<float, 4> clear_color = { 0.2f, 0.2f, 0.4f, 1.f };
 
