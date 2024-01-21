@@ -106,7 +106,10 @@ export namespace vfw
 			// Color Blend Attachment
 			auto color_blend_attach_st = vk::PipelineColorBlendAttachmentState{
 				.blendEnable    = false,
-				.colorWriteMask = vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG | vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA,
+				.colorWriteMask = vk::ColorComponentFlagBits::eR |
+				                  vk::ColorComponentFlagBits::eG |
+				                  vk::ColorComponentFlagBits::eB |
+				                  vk::ColorComponentFlagBits::eA,
 			};
 
 			// Color Blend State

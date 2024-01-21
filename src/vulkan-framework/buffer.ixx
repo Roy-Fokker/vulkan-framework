@@ -75,20 +75,20 @@ export namespace vfw
 				       ((mem_type.propertyFlags & properties) == properties);
 			};
 
-			// TODO: there must be a way to use ranges to get the 1st filtered value from enumeration
+			// TODO: there must be a way to use ranges to get the 1st filtered value from enumeration view
 			auto ev = phys_mem_props.memoryTypes |
 			          std::views::enumerate |
 			          std::views::filter(filter_fn);
 
-			if (not ev.empty())
+			if (ev.empty())
 			{
-				auto v = ev.begin();
-				std::println("Compatible memory type: {}", std::get<0>(*v));
-				return static_cast<uint32_t>(std::get<0>(*v));
+				std::println("Did not find compatible memory type.");
+				throw std::runtime_error("Did not find compatible memory type.");
 			}
 
-			std::println("Did not find compatible memory type.");
-			throw std::runtime_error("Did not find compatible memory type.");
+			auto mem_type = std::get<0>(*ev.begin());
+			std::println("Compatible memory type: {}", mem_type);
+			return static_cast<uint32_t>(mem_type);
 		}
 
 		void allocate_memory(vk::MemoryRequirements memory_requirements, uint32_t memory_type)
