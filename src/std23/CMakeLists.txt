@@ -21,7 +21,7 @@ target_compile_definitions(${PRJ_LIB_NAME}
 		WIN32_LEAN_AND_MEAN         # Windows.h should only include the basics
 )
 
-# ensure cmake knows which headers to include
+# ensure cmake knows which headers to include, basically whole directory
 target_include_directories(${PRJ_LIB_NAME}
 	INTERFACE .
 )
