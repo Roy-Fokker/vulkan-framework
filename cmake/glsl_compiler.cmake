@@ -29,6 +29,7 @@ function (target_shader_sources TARGET)
 			message(FATAL_ERROR "Cannot file shader file: ${source}")
 		endif()
 
+		# call vulkan sdk's glslc compiler with source and output arguments.
 		add_custom_command(
 			OUTPUT ${output}
 			COMMAND ${CMAKE_COMMAND} -E make_directory ${shader_dir}
@@ -38,9 +39,12 @@ function (target_shader_sources TARGET)
 			VERBATIM
 		)
 
+		# make a new variable to hold dependency target name
 		set(shader_target "${TARGET}_${basename}")
+		# add custom target using new variable bound to output file of glslc step
 		add_custom_target("${shader_target}"
 		                  DEPENDS "${output}")
+		# add compilation of this shader as dependency of the target
 		add_dependencies("${TARGET}" "${shader_target}")
 	endforeach()
 
