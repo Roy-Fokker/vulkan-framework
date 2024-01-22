@@ -130,6 +130,25 @@ export namespace vfw
 			current_frame = (current_frame + 1) % max_frames_in_flight; // 0 ... max_frame
 		}
 
+		void window_resized(HWND window_handle)
+		{
+			std::println("Window Resized event triggered.");
+
+			// Wait till gpu is idle
+			vk_device->get_device().waitIdle();
+
+			// destroy semaphores, fences, command_buffers and swapchain
+			destroy_synchronization_objects();
+			command_buffers.clear();
+			vk_swap_chain.reset();
+
+			vk_instance->update_surface(window_handle);
+			vk_swap_chain = std::make_unique<swap_chain>(vk_instance.get(), vk_device.get());
+			// recreate command buffers and sync objects
+			create_command_buffers();
+			create_synchronization_objects();
+		}
+
 	private:
 		void create_command_pool()
 		{

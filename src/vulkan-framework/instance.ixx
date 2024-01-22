@@ -102,6 +102,7 @@ export namespace vfw
 				out.graphics_family = static_cast<uint32_t>(std::distance(queue_families.begin(), queue_family_iter));
 			}
 
+			// TODO: change to use std::view::enumerate??
 			auto queue_idx{ 0 };
 			queue_family_iter = std::ranges::find_if(queue_families, [&]([[maybe_unused]] vk::QueueFamilyProperties &qf) -> bool {
 				auto present_support = device.getSurfaceSupportKHR(queue_idx, vk_surface);
@@ -116,6 +117,12 @@ export namespace vfw
 			}
 
 			return out;
+		}
+
+		void update_surface(HWND window_handle)
+		{
+			vk_instance.destroySurfaceKHR(vk_surface);
+			create_surface(window_handle);
 		}
 
 		auto get_surface() const -> const vk::SurfaceKHR &

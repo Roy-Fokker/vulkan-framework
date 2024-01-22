@@ -18,7 +18,10 @@ auto main() -> int
 
 	auto app = app_base::application(rndr);
 	wnd.set_callback(app.on_keypress);
-	wnd.set_callback(app.on_resize);
+	wnd.set_callback([&](std::uint32_t width, std::uint32_t height) {
+		rndr.window_resized(wnd.handle());
+		return app.on_resize(width, height);
+	});
 	wnd.set_callback(app.on_activate);
 
 	while (wnd.handle() and app.should_continue())
