@@ -66,6 +66,7 @@ namespace
 {
 	const auto wanted_device_extensions = std::vector{
 		VK_KHR_SWAPCHAIN_EXTENSION_NAME,
+		VK_KHR_MAINTENANCE1_EXTENSION_NAME, // so viewport height can be negative, all in order to get +Y to point up instead of down
 	};
 
 	auto check_device_extension_support(const vk::PhysicalDevice &device, const std::vector<const char *> &extensions) -> bool

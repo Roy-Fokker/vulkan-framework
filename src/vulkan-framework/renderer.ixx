@@ -247,9 +247,9 @@ export namespace vfw
 
 				auto viewport = vk::Viewport{
 					.x        = 0.0f,
-					.y        = 0.0f,
+					.y        = static_cast<float>(extent.height), // Top of the viewport is bottom of the screen to get +Y to point up
 					.width    = static_cast<float>(extent.width),
-					.height   = static_cast<float>(extent.height),
+					.height   = static_cast<float>(extent.height) * -1.f, // make height negative so +Y points up
 					.minDepth = 0.0f,
 					.maxDepth = 1.0f
 				};

@@ -146,9 +146,9 @@ export namespace app_base
 			rndr.add_pipeline(simple_pipeline);
 
 			const std::vector<vertex> vertices = {
-				{ { 0.0f, -0.5f }, { 1.0f, 0.0f, 0.0f } },
-				{ { 0.5f, 0.5f }, { 0.0f, 1.0f, 0.0f } },
-				{ { -0.5f, 0.5f }, { 0.0f, 0.0f, 1.0f } }
+				{ { 0.0f, 0.5f }, { 1.0f, 0.0f, 0.0f } },
+				{ { 0.5f, -0.5f }, { 0.0f, 1.0f, 0.0f } },
+				{ { -0.5f, -0.5f }, { 0.0f, 0.0f, 1.0f } },
 			};
 
 			auto vb_idx = rndr.add_buffer(vertices.size() * sizeof(vertex),
