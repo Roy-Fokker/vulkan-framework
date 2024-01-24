@@ -207,6 +207,7 @@ namespace
 
 		if (format_iter == sd.formats.end())
 		{
+			std::println("Unable to find desired surface format");
 			throw std::runtime_error("Unable to find desired surface format");
 		}
 

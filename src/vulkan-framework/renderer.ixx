@@ -136,17 +136,25 @@ export namespace vfw
 
 			// Wait till gpu is idle
 			vk_device->get_device().waitIdle();
-
-			// destroy semaphores, fences, command_buffers and swapchain
-			destroy_synchronization_objects();
-			command_buffers.clear();
 			vk_swap_chain.reset();
 
 			vk_instance->update_surface(window_handle);
 			vk_swap_chain = std::make_unique<swap_chain>(vk_instance.get(), vk_device.get());
-			// recreate command buffers and sync objects
-			create_command_buffers();
-			create_synchronization_objects();
+
+			// Only recreate command buffer and sync objects if frame image count has changed.
+			if (max_frames_in_flight != vk_swap_chain->get_image_count())
+			{
+				max_frames_in_flight = vk_swap_chain->get_image_count();
+
+				std::println("New swapchain image count: {}", max_frames_in_flight);
+				// destroy semaphores, fences, command_buffers and swapchain
+				destroy_synchronization_objects();
+				command_buffers.clear();
+
+				// recreate command buffers and sync objects
+				create_command_buffers();
+				create_synchronization_objects();
+			}
 		}
 
 	private:
