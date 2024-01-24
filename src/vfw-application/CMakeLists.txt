@@ -21,6 +21,7 @@ target_compile_definitions(${PRJ_EXE_NAME}
 		VK_USE_PLATFORM_WIN32_KHR   # On Windows, Vulkan needs this.
 		GLM_FORCE_DEPTH_ZERO_TO_ONE # GLM clip space should be in Z-axis to 0 to 1
 		GLM_FORCE_LEFT_HANDED       # GLM should use left-handed coordinates, +z goes into screen
+		GLM_FORCE_RADIANS           # GLM should always use radians not degrees.
 )
 
 # source files for this application

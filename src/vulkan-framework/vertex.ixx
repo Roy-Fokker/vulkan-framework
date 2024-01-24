@@ -9,6 +9,8 @@ export namespace vfw
 		glm::vec2 pos;
 		glm::vec3 colr;
 
+		// For now using constexpr std::array this might be okay for most uses.
+		// std::vector object is not allowed to be used in constexpr context.
 		constexpr static auto get_binding_descriptions()
 		{
 			return std::array{
@@ -20,6 +22,8 @@ export namespace vfw
 			};
 		}
 
+		// For now using constexpr std::array this might be okay for most uses.
+		// std::vector object is not allowed to be used in constexpr context.
 		constexpr static auto get_attribute_descriptions()
 		{
 			return std::array{

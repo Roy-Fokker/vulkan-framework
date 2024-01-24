@@ -13,7 +13,7 @@ export namespace vfw
 		{
 			size_t buffer_size;
 			const void *buffer_data;
-			vk::BufferUsageFlagBits usage;
+			vk::BufferUsageFlags usage;
 			vk::SharingMode sharing_mode;
 		};
 
@@ -39,6 +39,7 @@ export namespace vfw
 			vk_device.destroyBuffer(vk_buffer);
 		}
 
+		// TODO: check to make sure buffer_size doesn't exceed what was allocated for this object.
 		void update_buffer(size_t buffer_size, const void *buffer_data)
 		{
 			auto data = vk_device.mapMemory(vk_buffer_memory, 0, buffer_size);

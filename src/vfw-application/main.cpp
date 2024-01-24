@@ -10,7 +10,7 @@ auto main() -> int
 
 	auto wnd = win32::window({ .width  = 800,
 	                           .height = 600,
-	                           .title  = L"First Triangle"sv });
+	                           .title  = L"Second Triangle"sv });
 
 	wnd.show();
 

@@ -51,7 +51,7 @@ export namespace vfw
 
 		[[nodiscard]] auto add_buffer(size_t buffer_size,
 		                              const void *buffer_data,
-		                              vk::BufferUsageFlagBits usage,
+		                              vk::BufferUsageFlags usage,
 		                              vk::SharingMode sharing_mode)
 			-> uint32_t
 		{
