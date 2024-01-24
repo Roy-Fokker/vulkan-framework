@@ -9,41 +9,6 @@ import vfw;
 
 export namespace app_base
 {
-	struct vertex
-	{
-		glm::vec2 pos;
-		glm::vec3 colr;
-
-		constexpr static auto get_binding_descriptions()
-		{
-			return std::array{
-				vk::VertexInputBindingDescription{
-					.binding   = 0,
-					.stride    = sizeof(vertex),
-					.inputRate = vk::VertexInputRate::eVertex,
-				},
-			};
-		}
-
-		constexpr static auto get_attribute_descriptions()
-		{
-			return std::array{
-				vk::VertexInputAttributeDescription{
-					.location = 0,
-					.binding  = 0,
-					.format   = vk::Format::eR32G32Sfloat,
-					.offset   = offsetof(vertex, pos),
-				},
-				vk::VertexInputAttributeDescription{
-					.location = 1,
-					.binding  = 0,
-					.format   = vk::Format::eR32G32B32Sfloat,
-					.offset   = offsetof(vertex, colr),
-				},
-			};
-		}
-	};
-
 	class application
 	{
 	public:
@@ -135,8 +100,8 @@ export namespace app_base
 					{ vk::ShaderStageFlagBits::eVertex, vert_shader_bin },
 					{ vk::ShaderStageFlagBits::eFragment, frag_shader_bin },
 				},
-				.input_attributes = vertex::get_attribute_descriptions(),
-				.input_bindings   = vertex::get_binding_descriptions(),
+				.input_attributes = vfw::vertex::get_attribute_descriptions(),
+				.input_bindings   = vfw::vertex::get_binding_descriptions(),
 				.topology         = { vk::PrimitiveTopology::eTriangleList },
 				.polygon_mode     = { vk::PolygonMode::eFill },
 				.cull_mode        = { vk::CullModeFlagBits::eBack },
@@ -145,13 +110,13 @@ export namespace app_base
 
 			rndr.add_pipeline(simple_pipeline);
 
-			const std::vector<vertex> vertices = {
+			const std::vector<vfw::vertex> vertices = {
 				{ { 0.0f, 0.5f }, { 1.0f, 0.0f, 0.0f } },
 				{ { 0.5f, -0.5f }, { 0.0f, 1.0f, 0.0f } },
 				{ { -0.5f, -0.5f }, { 0.0f, 0.0f, 1.0f } },
 			};
 
-			auto vb_idx = rndr.add_buffer(vertices.size() * sizeof(vertex),
+			auto vb_idx = rndr.add_buffer(vertices.size() * sizeof(vfw::vertex),
 			                              reinterpret_cast<const void *>(vertices.data()),
 			                              vk::BufferUsageFlagBits::eVertexBuffer,
 			                              vk::SharingMode::eExclusive);
