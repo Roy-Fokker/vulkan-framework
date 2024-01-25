@@ -9,9 +9,9 @@ import vfw;
 
 export namespace app_base
 {
-	struct alignas(16) push_constant
+	struct push_constant
 	{
-		glm::vec2 pos;
+		alignas(16) glm::vec2 pos;
 	};
 
 	class application
