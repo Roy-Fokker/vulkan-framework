@@ -15,6 +15,22 @@ export namespace vfw
 	class renderer
 	{
 	public:
+		struct vertex_buffer_draw_command
+		{
+			uint32_t buffer_idx;
+			uint32_t vertex_count;
+			uint32_t instance_count;
+			uint32_t vertex_offset;
+			uint32_t index_offset;
+
+			// TODO: would really like to figure out how to use std::span for this. If possible.
+			struct push_constant
+			{
+				const void *data;
+				size_t size;
+			} constant;
+		};
+
 		renderer(HWND window_handle)
 		{
 			vk_instance   = std::make_unique<instance>(window_handle);
@@ -65,19 +81,9 @@ export namespace vfw
 			return static_cast<uint32_t>(gfx_buffers.size() - 1);
 		}
 
-		void draw_vb_cmd(uint32_t buffer_idx,
-		                 uint32_t vertex_count,
-		                 uint32_t instance_count,
-		                 uint32_t vertex_offset,
-		                 uint32_t index_offset)
+		void draw_vb_cmd(const vertex_buffer_draw_command &draw_cmd)
 		{
-			draw_vb_commands.push_back({
-				.buffer_idx     = buffer_idx,
-				.vertex_count   = vertex_count,
-				.instance_count = instance_count,
-				.vertex_offset  = vertex_offset,
-				.index_offset   = index_offset,
-			});
+			draw_vb_commands.push_back(draw_cmd);
 		}
 
 		void draw_frame()
@@ -274,6 +280,16 @@ export namespace vfw
 					cb.bindVertexBuffers(0, // first binding
 					                     gfx_buffers.at(vb.buffer_idx).get_buffer(),
 					                     { 0 });
+
+					if (vb.constant.size > 0)
+					{
+						cb.pushConstants(gfx_pipeline->get_pipeline_layout(),
+						                 vk::ShaderStageFlagBits::eVertex,
+						                 0,
+						                 static_cast<uint32_t>(vb.constant.size),
+						                 vb.constant.data);
+					}
+
 					cb.draw(vb.vertex_count, vb.instance_count, vb.vertex_offset, vb.index_offset);
 				}
 			}
@@ -330,14 +346,6 @@ export namespace vfw
 
 		std::vector<buffer> gfx_buffers;
 
-		struct draw_vb_data
-		{
-			uint32_t buffer_idx;
-			uint32_t vertex_count;
-			uint32_t instance_count;
-			uint32_t vertex_offset;
-			uint32_t index_offset;
-		};
-		std::vector<draw_vb_data> draw_vb_commands;
+		std::vector<vertex_buffer_draw_command> draw_vb_commands;
 	};
 }

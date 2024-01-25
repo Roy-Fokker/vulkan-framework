@@ -13,4 +13,6 @@ target_shader_sources(${PRJ_LIB_NAME}
 	# basic shader vertex list set by application
 	basic_shader.frag
 	basic_shader.vert
+	basic_pc_shader.frag
+	basic_pc_shader.vert
 )

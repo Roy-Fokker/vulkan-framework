@@ -15,6 +15,7 @@ export namespace vfw
 			std::vector<shader_stage_file> shaders; // Note: Do not have multiple items with same ShaderStageFlagBits value
 			std::span<const vk::VertexInputAttributeDescription> input_attributes;
 			std::span<const vk::VertexInputBindingDescription> input_bindings;
+			std::span<const vk::PushConstantRange> push_constants;
 			vk::PrimitiveTopology topology;
 			vk::PolygonMode polygon_mode;
 			vk::CullModeFlags cull_mode;
@@ -38,6 +39,11 @@ export namespace vfw
 		auto get_pipeline() const -> vk::Pipeline
 		{
 			return vk_pipeline;
+		}
+
+		auto get_pipeline_layout() const -> vk::PipelineLayout
+		{
+			return vk_pipeline_layout;
 		}
 
 	private:
@@ -135,7 +141,8 @@ export namespace vfw
 			// Pipeline Layout
 			auto pipeline_layout_info = vk::PipelineLayoutCreateInfo{
 				.setLayoutCount         = 0,
-				.pushConstantRangeCount = 0,
+				.pushConstantRangeCount = static_cast<uint32_t>(desc.push_constants.size()),
+				.pPushConstantRanges    = desc.push_constants.data(),
 			};
 
 			vk_pipeline_layout = vk_device.createPipelineLayout(pipeline_layout_info);

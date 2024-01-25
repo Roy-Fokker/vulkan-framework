@@ -9,6 +9,11 @@ import vfw;
 
 export namespace app_base
 {
+	struct alignas(16) push_constant
+	{
+		glm::vec2 pos;
+	};
+
 	class application
 	{
 	public:
@@ -56,6 +61,12 @@ export namespace app_base
 		{
 			dt = delta_time;
 			tt = total_time;
+
+			constant.pos.x += 0.002f;
+			if (constant.pos.x > 1.5f)
+			{
+				constant.pos.x = -1.5f;
+			}
 		}
 
 		[[nodiscard]] auto should_continue() const -> bool
@@ -92,8 +103,8 @@ export namespace app_base
 		{
 			rndr.set_clear_color({ 0.4f, 0.4f, 0.2f, 1.f });
 
-			auto vert_shader_bin = read_file("shaders/basic_shader.vert.spv");
-			auto frag_shader_bin = read_file("shaders/basic_shader.frag.spv");
+			auto vert_shader_bin = read_file("shaders/basic_pc_shader.vert.spv");
+			auto frag_shader_bin = read_file("shaders/basic_pc_shader.frag.spv");
 
 			auto simple_pipeline = vfw::pipeline_description{
 				.shaders = {
@@ -102,10 +113,17 @@ export namespace app_base
 				},
 				.input_attributes = vfw::vertex::get_attribute_descriptions(),
 				.input_bindings   = vfw::vertex::get_binding_descriptions(),
-				.topology         = { vk::PrimitiveTopology::eTriangleList },
-				.polygon_mode     = { vk::PolygonMode::eFill },
-				.cull_mode        = { vk::CullModeFlagBits::eBack },
-				.front_face       = { vk::FrontFace::eClockwise },
+				.push_constants   = std::array{
+                    vk::PushConstantRange{
+						  .stageFlags = vk::ShaderStageFlagBits::eVertex,
+						  .offset     = 0,
+						  .size       = sizeof(push_constant),
+                    },
+                },
+				.topology     = { vk::PrimitiveTopology::eTriangleList },
+				.polygon_mode = { vk::PolygonMode::eFill },
+				.cull_mode    = { vk::CullModeFlagBits::eBack },
+				.front_face   = { vk::FrontFace::eClockwise },
 			};
 
 			rndr.add_pipeline(simple_pipeline);
@@ -121,14 +139,26 @@ export namespace app_base
 			                              vk::BufferUsageFlagBits::eVertexBuffer,
 			                              vk::SharingMode::eExclusive);
 
-			rndr.draw_vb_cmd(vb_idx,
-			                 static_cast<uint32_t>(vertices.size()),
-			                 1, 0, 0);
+			rndr.draw_vb_cmd({
+				.buffer_idx     = vb_idx,
+				.vertex_count   = static_cast<uint32_t>(vertices.size()),
+				.instance_count = 1,
+				.vertex_offset  = 0,
+				.index_offset   = 0,
+				.constant       = {
+						  .data = reinterpret_cast<const void *>(&constant),
+						  .size = sizeof(constant),
+                },
+			});
 		}
 
 	private:
 		bool close = false;
 		double dt  = 0.f;
 		double tt  = 0.f;
+
+		push_constant constant = {
+			.pos = { -1.5f, 0.0f },
+		};
 	};
 }
