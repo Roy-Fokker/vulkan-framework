@@ -30,6 +30,7 @@ target_sources(${PRJ_EXE_NAME}
 		main.cpp
 
 	PRIVATE FILE_SET app_modules TYPE CXX_MODULES FILES
+		clock.ixx
 		input.ixx
 		window.ixx
 		application.ixx

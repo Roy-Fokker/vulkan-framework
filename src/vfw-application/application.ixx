@@ -62,7 +62,7 @@ export namespace app_base
 			dt = delta_time;
 			tt = total_time;
 
-			constant.pos.x += 0.002f;
+			constant.pos.x += static_cast<float>(dt);
 			if (constant.pos.x > 1.5f)
 			{
 				constant.pos.x = -1.5f;
@@ -103,6 +103,13 @@ export namespace app_base
 		{
 			rndr.set_clear_color({ 0.4f, 0.4f, 0.2f, 1.f });
 
+			setup_pipeline(rndr);
+			setup_model(rndr);
+			add_draw_cmds(rndr);
+		}
+
+		void setup_pipeline(vfw::renderer &rndr)
+		{
 			auto vert_shader_bin = read_file("shaders/basic_pc_shader.vert.spv");
 			auto frag_shader_bin = read_file("shaders/basic_pc_shader.frag.spv");
 
@@ -127,28 +134,35 @@ export namespace app_base
 			};
 
 			rndr.add_pipeline(simple_pipeline);
+		}
 
-			const std::vector<vfw::vertex> vertices = {
+		void setup_model(vfw::renderer &rndr)
+		{
+			vertices = {
 				{ { 0.0f, 0.5f }, { 1.0f, 0.0f, 0.0f } },
 				{ { 0.5f, -0.5f }, { 0.0f, 1.0f, 0.0f } },
 				{ { -0.5f, -0.5f }, { 0.0f, 0.0f, 1.0f } },
 			};
 
-			auto vb_idx = rndr.add_buffer(vertices.size() * sizeof(vfw::vertex),
-			                              reinterpret_cast<const void *>(vertices.data()),
-			                              vk::BufferUsageFlagBits::eVertexBuffer,
-			                              vk::SharingMode::eExclusive);
+			model_idx = rndr.add_buffer(vertices.size() * sizeof(vfw::vertex),
+			                            reinterpret_cast<const void *>(vertices.data()),
+			                            vk::BufferUsageFlagBits::eVertexBuffer,
+			                            vk::SharingMode::eExclusive);
+		}
 
+		void add_draw_cmds(vfw::renderer &rndr)
+		{
 			rndr.draw_vb_cmd({
-				.buffer_idx     = vb_idx,
+				.buffer_idx     = model_idx,
 				.vertex_count   = static_cast<uint32_t>(vertices.size()),
 				.instance_count = 1,
 				.vertex_offset  = 0,
 				.index_offset   = 0,
-				.constant       = {
-						  .data = reinterpret_cast<const void *>(&constant),
-						  .size = sizeof(constant),
-                },
+
+				.constant = {
+					.data = reinterpret_cast<const void *>(&constant),
+					.size = sizeof(constant),
+				},
 			});
 		}
 
@@ -156,6 +170,9 @@ export namespace app_base
 		bool close = false;
 		double dt  = 0.f;
 		double tt  = 0.f;
+
+		std::vector<vfw::vertex> vertices{};
+		uint32_t model_idx{};
 
 		push_constant constant = {
 			.pos = { -1.5f, 0.0f },

@@ -1,3 +1,4 @@
+import clock;
 import input;
 import window;
 import application;
@@ -24,10 +25,16 @@ auto main() -> int
 	});
 	wnd.set_callback(app.on_activate);
 
+	auto clk = app_clock::timer();
+
 	while (wnd.handle() and app.should_continue())
 	{
-		// TODO: Create a clock class to get delta_time and total_time
-		app.update(0.f, 0.f);
+		clk.tick();
+
+		auto dt = clk.get_delta<app_clock::s>();
+		auto tt = clk.get_total<app_clock::s>();
+
+		app.update(dt, tt);
 
 		rndr.draw_frame();
 
