@@ -25,14 +25,14 @@ auto main() -> int
 	});
 	wnd.set_callback(app.on_activate);
 
-	auto clk = app_clock::timer();
+	auto clk = timer::clock();
 
 	while (wnd.handle() and app.should_continue())
 	{
 		clk.tick();
 
-		auto dt = clk.get_delta<app_clock::s>();
-		auto tt = clk.get_total<app_clock::s>();
+		auto dt = clk.get_delta<timer::s>();
+		auto tt = clk.get_total<timer::s>();
 
 		app.update(dt, tt);
 
@@ -40,6 +40,8 @@ auto main() -> int
 
 		wnd.process_messages();
 	}
+
+	std::println("Loop run time: {:>5.2f}s", clk.get_total<timer::s>());
 
 	return 0;
 }

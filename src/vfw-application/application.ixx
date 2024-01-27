@@ -48,7 +48,7 @@ export namespace app_base
 			on_activate = [&](win32::window::active_state is_active, bool minimized) -> bool {
 				auto state = (is_active == win32::window::active_state::active) ? true : false;
 
-				std::println("⌚: {:>5.2f}s, ⏱️: {}ns, Active: {:^5}, Minimized: {:^5}",
+				std::println("⌚: {:>5.2f}s, ⏱️: {}s, Active: {:^5}, Minimized: {:^5}",
 				             tt, dt, state, minimized);
 
 				return true;
