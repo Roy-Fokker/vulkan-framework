@@ -1,5 +1,6 @@
 # find vcpkg installed library
 find_package(Vulkan REQUIRED)
+find_package(glm CONFIG REQUIRED)
 
 # set application name variable
 set(PRJ_EXE_NAME "vfw-application")
@@ -29,6 +30,7 @@ target_sources(${PRJ_EXE_NAME}
 	PRIVATE
 		main.cpp
 
+	# magic encantations for C++ Modules Support in CMake
 	PRIVATE FILE_SET app_modules TYPE CXX_MODULES FILES
 		clock.ixx
 		input.ixx
@@ -43,6 +45,7 @@ target_link_libraries(${PRJ_EXE_NAME}
 		vulkan-framework  # our vulkan framework
 		shaders           # glsl/hlsl shaders to use
 		Vulkan::Vulkan    # Vulkan SDK
+		glm::glm          # glm library
 )
 
 # precompiled headers 

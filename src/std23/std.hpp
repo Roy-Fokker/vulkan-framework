@@ -110,6 +110,8 @@
 #include <cwchar>
 #include <cwctype>
 
+// Not part of MSVC C++ Standard Library module file.
+// Added for convinence of not having to include Windows.h everywhere.
 #ifdef INCLUDE_WINDOWS
 #pragma warning(push)
 #pragma warning(disable : 5105)
