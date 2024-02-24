@@ -53,6 +53,7 @@
 # Visual Studio folders
 .vs/*
 !.vs/launch.vs.json
+*.pdb
 
 # other files/folders
 .DS_Store
