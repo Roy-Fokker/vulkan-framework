@@ -9,6 +9,8 @@ auto main() -> int
 {
 	using namespace std::string_view_literals;
 
+	std::println("Running in: {}", std::filesystem::current_path().generic_string());
+
 	auto wnd = win32::window({ .width  = 800,
 	                           .height = 600,
 	                           .title  = L"Second Triangle"sv });
