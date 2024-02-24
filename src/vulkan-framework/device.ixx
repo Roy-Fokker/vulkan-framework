@@ -78,7 +78,8 @@ namespace
 	{
 		auto device_exts = device.enumerateDeviceExtensionProperties();
 
-		auto trans_view = device_exts | std::views::transform([](const vk::ExtensionProperties &prop) -> const char * {
+		auto trans_view = device_exts |
+		                  std::views::transform([](const vk::ExtensionProperties &prop) -> const char * {
 			return prop.extensionName.data();
 		});
 
