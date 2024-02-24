@@ -1,5 +1,9 @@
 module;
 
+#include <fmt/core.h>
+#include <fmt/format.h>
+#include <fmt/ranges.h>
+
 export module vfw:device;
 
 import :instance;
@@ -116,6 +120,9 @@ void device::create_logical_device(const instance *vfw_inst)
 	std::println("Queue Families: gfx:{}, present:{}",
 	             qf.graphics_family.value_or(-1),
 	             qf.present_family.value_or(-1));
+
+	// TODO: should be able to do below with std::println, not sure where problem is
+	fmt::println("Desired Device Extensions:\n\t{}", wanted_device_extensions);
 
 	auto queue_array = qf.get_array();
 

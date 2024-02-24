@@ -1,4 +1,5 @@
 # find vcpkg installed library
+find_package(fmt CONFIG REQUIRED)
 find_package(Vulkan REQUIRED)
 find_package(glm CONFIG REQUIRED)
 
@@ -50,4 +51,5 @@ target_link_libraries(${PRJ_LIB_NAME}
 		std23
 		Vulkan::Vulkan
 		glm::glm
+		fmt::fmt
 )

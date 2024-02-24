@@ -1,5 +1,9 @@
 module;
 
+#include <fmt/core.h>
+#include <fmt/format.h>
+#include <fmt/ranges.h>
+
 export module vfw:instance;
 
 export namespace vfw
@@ -126,25 +130,25 @@ export namespace vfw
 
 			/* Old logic
 			auto queue_family_iter = std::ranges::find_if(queue_families, [&](vk::QueueFamilyProperties &qf) -> bool {
-				return static_cast<bool>(qf.queueFlags & vk::QueueFlagBits::eGraphics);
+			    return static_cast<bool>(qf.queueFlags & vk::QueueFlagBits::eGraphics);
 			});
 
 			if (queue_family_iter != queue_families.end())
 			{
-				out.graphics_family = static_cast<uint32_t>(std::distance(queue_families.begin(), queue_family_iter));
+			    out.graphics_family = static_cast<uint32_t>(std::distance(queue_families.begin(), queue_family_iter));
 			}
 
 			auto queue_idx{ 0 };
 			queue_family_iter = std::ranges::find_if(queue_families, [&]([[maybe_unused]] vk::QueueFamilyProperties &qf) -> bool {
-				auto present_support = device.getSurfaceSupportKHR(queue_idx, vk_surface);
-				queue_idx++;
+			    auto present_support = device.getSurfaceSupportKHR(queue_idx, vk_surface);
+			    queue_idx++;
 
-				return static_cast<bool>(present_support);
+			    return static_cast<bool>(present_support);
 			});
 
 			if (queue_family_iter != queue_families.end())
 			{
-				out.present_family = static_cast<uint32_t>(std::distance(queue_families.begin(), queue_family_iter));
+			    out.present_family = static_cast<uint32_t>(std::distance(queue_families.begin(), queue_family_iter));
 			}
 			*/
 
@@ -332,6 +336,9 @@ void instance::create_instance(const HWND window_handle)
 	const auto engine  = "VulkanFramework"sv;
 
 	std::println("Window Name: {}, Version, {}, Engine Name: {}", name, version, engine);
+	// TODO: should be able to do below with std::println, not sure where problem is
+	fmt::println("Desired Instance Extensions:\n\t{}", wanted_instance_extensions);
+	fmt::println("Desired Instance Layers:\n\t{}", wanted_instance_layers);
 
 	auto get_exts = [&]() {
 		auto installed_extensions = get_installed_extensions();
