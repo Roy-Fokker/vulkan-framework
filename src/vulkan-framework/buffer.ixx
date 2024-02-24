@@ -77,6 +77,7 @@ export namespace vfw
 			};
 
 			// TODO: there must be a way to use ranges to get the 1st filtered value from enumeration view
+			// Doesn't seem to be.
 			auto ev = phys_mem_props.memoryTypes |
 			          std::views::enumerate |
 			          std::views::filter(filter_fn);

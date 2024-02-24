@@ -93,6 +93,38 @@ export namespace vfw
 
 			auto queue_families = device.getQueueFamilyProperties();
 
+			auto gf_fn = [&](auto &&pair) -> bool {
+				auto &&[idx, qfp] = pair;
+
+				return static_cast<bool>(qfp.queueFlags & vk::QueueFlagBits::eGraphics);
+			};
+
+			auto gf_rng = queue_families |
+			              std::views::enumerate |
+			              std::views::filter(gf_fn);
+
+			if (not gf_rng.empty())
+			{
+				out.graphics_family = static_cast<uint32_t>(std::get<0>(*gf_rng.begin()));
+			}
+
+			auto pf_fn = [&](auto &&pair) -> bool {
+				auto &&[idx, qfp] = pair;
+
+				auto present_support = device.getSurfaceSupportKHR(static_cast<uint32_t>(idx), vk_surface);
+				return static_cast<bool>(present_support);
+			};
+
+			auto pf_rng = queue_families |
+			              std::views::enumerate |
+			              std::views::filter(pf_fn);
+
+			if (not pf_rng.empty())
+			{
+				out.present_family = static_cast<uint32_t>(std::get<0>(*pf_rng.begin()));
+			}
+
+			/* Old logic
 			auto queue_family_iter = std::ranges::find_if(queue_families, [&](vk::QueueFamilyProperties &qf) -> bool {
 				return static_cast<bool>(qf.queueFlags & vk::QueueFlagBits::eGraphics);
 			});
@@ -102,7 +134,6 @@ export namespace vfw
 				out.graphics_family = static_cast<uint32_t>(std::distance(queue_families.begin(), queue_family_iter));
 			}
 
-			// TODO: change to use std::view::enumerate??
 			auto queue_idx{ 0 };
 			queue_family_iter = std::ranges::find_if(queue_families, [&]([[maybe_unused]] vk::QueueFamilyProperties &qf) -> bool {
 				auto present_support = device.getSurfaceSupportKHR(queue_idx, vk_surface);
@@ -115,6 +146,7 @@ export namespace vfw
 			{
 				out.present_family = static_cast<uint32_t>(std::distance(queue_families.begin(), queue_family_iter));
 			}
+			*/
 
 			return out;
 		}
