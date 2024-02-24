@@ -100,19 +100,22 @@ using namespace vfw;
 
 void device::pick_physical_device(const instance *vfw_inst)
 {
-	auto physical_devices     = vfw_inst->list_physical_devices();
-	auto suitable_device_iter = std::ranges::find_if(physical_devices, [&](vk::PhysicalDevice &device) {
+	auto find_fn = [&](auto &&device) -> bool {
 		auto srfc_dtls      = vfw_inst->query_surface_details(device);
 		auto exts_supported = check_device_extension_support(device, wanted_device_extensions);
 		auto que_fam        = vfw_inst->find_queue_family(device);
 
 		return que_fam.is_complete() and exts_supported and not srfc_dtls.formats.empty() and not srfc_dtls.present_modes.empty();
-	});
-	if (suitable_device_iter == physical_devices.end())
+	};
+
+	auto physical_devices    = vfw_inst->list_physical_devices();
+	auto suitable_device_rng = physical_devices |
+	                           std::views::filter(find_fn);
+	if (suitable_device_rng.empty())
 	{
 		throw std::runtime_error("Cannot find suitable physical device.");
 	}
-	vk_physical_device = *suitable_device_iter;
+	vk_physical_device = *suitable_device_rng.begin();
 }
 
 void device::create_logical_device(const instance *vfw_inst)
