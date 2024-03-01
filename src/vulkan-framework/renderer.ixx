@@ -81,6 +81,7 @@ export namespace vfw
 
 		void draw_frame()
 		{
+			const auto wait_time           = 1'000'000'000;
 			auto result                    = vk::Result{};
 			auto image_index               = 0u;
 			auto in_flight_fence           = sync_objects.at(current_frame).in_flight;
@@ -90,9 +91,9 @@ export namespace vfw
 			auto sc                        = vk_swap_chain->get();
 			auto dev                       = vk_device->get_device();
 
-			result = dev.waitForFences(in_flight_fence, true, 1'000'000'000);
+			result = dev.waitForFences(in_flight_fence, true, wait_time);
 
-			std::tie(result, image_index) = dev.acquireNextImageKHR(sc, 1'000'000'000, image_available_semaphore, VK_NULL_HANDLE);
+			std::tie(result, image_index) = dev.acquireNextImageKHR(sc, wait_time, image_available_semaphore, VK_NULL_HANDLE);
 			resize_check(result, 1);
 
 			dev.resetFences(in_flight_fence);
@@ -135,12 +136,15 @@ export namespace vfw
 
 			// Wait till gpu is idle
 			vk_device->get_device().waitIdle();
+			// delete current swapchain
 			vk_swap_chain.reset();
-
+			// update khr_surface using new window dimensions
 			vk_instance->update_surface(window_handle);
+			// make new swapchain
 			vk_swap_chain = std::make_unique<swap_chain>(vk_instance.get(), vk_device.get());
 
 			// Only recreate command buffer and sync objects if frame image count has changed.
+			// Should not happen in reality, as device has not changed.
 			if (max_frames_in_flight != vk_swap_chain->get_image_count())
 			{
 				max_frames_in_flight = vk_swap_chain->get_image_count();
@@ -235,9 +239,8 @@ export namespace vfw
 		{
 			auto extent      = vk_swap_chain->get_extent();
 			auto clear_value = vk::ClearValue{
-				.color = clear_color
+				.color = clear_color,
 			};
-
 			auto rp_begin_info = vk::RenderPassBeginInfo{
 				.renderPass  = vk_swap_chain->get_render_pass(),
 				.framebuffer = vk_swap_chain->frame_buffer(image_index),
@@ -252,6 +255,7 @@ export namespace vfw
 			{
 				cb.bindPipeline(vk::PipelineBindPoint::eGraphics, gfx_pipeline->get_pipeline());
 
+				// TODO: maybe should a member to current class. doesn't change every frame
 				auto viewport = vk::Viewport{
 					.x        = 0.0f,
 					.y        = static_cast<float>(extent.height), // Top of the viewport is bottom of the screen to get +Y to point up
