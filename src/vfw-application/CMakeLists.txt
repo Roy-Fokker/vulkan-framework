@@ -1,6 +1,7 @@
 # find vcpkg installed library
 find_package(Vulkan REQUIRED)
 find_package(glm CONFIG REQUIRED)
+find_package(fmt CONFIG REQUIRED)
 
 # set application name variable
 set(PRJ_EXE_NAME "vfw-application")
@@ -46,6 +47,7 @@ target_link_libraries(${PRJ_EXE_NAME}
 		shaders           # glsl/hlsl shaders to use
 		Vulkan::Vulkan    # Vulkan SDK
 		glm::glm          # glm library
+		fmt::fmt          # fmt library
 )
 
 # precompiled headers 
