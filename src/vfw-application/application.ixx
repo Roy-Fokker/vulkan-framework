@@ -113,27 +113,28 @@ export namespace app_base
 			auto vert_shader_bin = read_file("shaders/basic_pc_shader.vert.spv");
 			auto frag_shader_bin = read_file("shaders/basic_pc_shader.frag.spv");
 
-			auto simple_pipeline = vfw::pipeline_description{
+			rndr.add_pipeline({
 				.shaders = {
 					{ vk::ShaderStageFlagBits::eVertex, vert_shader_bin },
 					{ vk::ShaderStageFlagBits::eFragment, frag_shader_bin },
 				},
+
 				.input_attributes = vfw::vertex::get_attribute_descriptions(),
 				.input_bindings   = vfw::vertex::get_binding_descriptions(),
-				.push_constants   = std::array{
-                    vk::PushConstantRange{
-						  .stageFlags = vk::ShaderStageFlagBits::eVertex,
-						  .offset     = 0,
-						  .size       = sizeof(push_constant),
-                    },
-                },
+
+				.push_constants = std::array{
+					vk::PushConstantRange{
+						.stageFlags = vk::ShaderStageFlagBits::eVertex,
+						.offset     = 0,
+						.size       = sizeof(push_constant),
+					},
+				},
+
 				.topology     = { vk::PrimitiveTopology::eTriangleList },
 				.polygon_mode = { vk::PolygonMode::eFill },
 				.cull_mode    = { vk::CullModeFlagBits::eBack },
 				.front_face   = { vk::FrontFace::eClockwise },
-			};
-
-			rndr.add_pipeline(simple_pipeline);
+			});
 		}
 
 		void setup_model(vfw::renderer &rndr)
@@ -144,10 +145,12 @@ export namespace app_base
 				{ { -0.5f, -0.5f }, { 0.0f, 0.0f, 1.0f } },
 			};
 
-			model_idx = rndr.add_buffer(vertices.size() * sizeof(vfw::vertex),
-			                            reinterpret_cast<const void *>(vertices.data()),
-			                            vk::BufferUsageFlagBits::eVertexBuffer,
-			                            vk::SharingMode::eExclusive);
+			model_idx = rndr.add_buffer({
+				.buffer_size  = vertices.size() * sizeof(vfw::vertex),
+				.buffer_data  = reinterpret_cast<const void *>(vertices.data()),
+				.usage        = vk::BufferUsageFlagBits::eVertexBuffer,
+				.sharing_mode = vk::SharingMode::eExclusive,
+			});
 		}
 
 		void add_draw_cmds(vfw::renderer &rndr)

@@ -11,6 +11,7 @@ import :buffer;
 export namespace vfw
 {
 	using pipeline_description = pipeline::description;
+	using buffer_description   = buffer::description;
 
 	class renderer
 	{
@@ -65,19 +66,11 @@ export namespace vfw
 			gfx_pipeline = std::make_unique<pipeline>(ldevice, rp, desc);
 		}
 
-		[[nodiscard]] auto add_buffer(size_t buffer_size,
-		                              const void *buffer_data,
-		                              vk::BufferUsageFlags usage,
-		                              vk::SharingMode sharing_mode)
+		[[nodiscard]] auto add_buffer(const buffer_description &desc)
 			-> uint32_t
 		{
-			gfx_buffers.emplace_back(vk_device.get(),
-			                         buffer::description{
-										 .buffer_size  = buffer_size,
-										 .buffer_data  = buffer_data,
-										 .usage        = usage,
-										 .sharing_mode = sharing_mode,
-									 });
+			gfx_buffers.emplace_back(vk_device.get(), desc);
+
 			return static_cast<uint32_t>(gfx_buffers.size() - 1);
 		}
 
