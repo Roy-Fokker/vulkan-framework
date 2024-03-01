@@ -81,7 +81,7 @@ export namespace vfw
 
 		void draw_frame()
 		{
-			const auto wait_time           = 1'000'000'000;
+			const auto wait_time           = 1'000'000'000u;
 			auto result                    = vk::Result{};
 			auto image_index               = 0u;
 			auto in_flight_fence           = sync_objects.at(current_frame).in_flight;
