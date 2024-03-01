@@ -12,24 +12,28 @@ based on C++23 Project Template
 - enabling standard module
 - currently it's win32 only
 
-
 ## project dependencies installed via vcpkg
 - vulkan
 - glm
+- fmt
 
 ## debugging and executing 
 - should be run from .\bin directory.
 - can be configured via launch.json and settings.json
   launch.json
   ```json
-	"program": "${command:cmake.launchTargetPath}",
-	"cwd": "${workspaceFolder}/bin",
-	"environment": [
-		{
-			"name": "PATH",
-			"value": "${env:PATH}:${command:cmake.getLaunchTargetDirectory}"
-		}
-	],
+	"configurations": [
+		...
+		"program": "${command:cmake.launchTargetPath}",
+		"cwd": "${workspaceFolder}/bin",
+		"environment": [
+			{
+				"name": "PATH",
+				"value": "${env:PATH}:${command:cmake.getLaunchTargetDirectory}"
+			}
+		],
+		...
+	]
   ```
   settings.json
   ```json 
