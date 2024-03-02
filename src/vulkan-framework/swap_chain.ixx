@@ -63,6 +63,7 @@ export namespace vfw
 
 	private:
 		void create_swap_chain(const vk::SurfaceKHR &surface, const queue_family &qf, const surface_details &sd);
+
 		void create_images()
 		{
 			vk_images = vk_device.getSwapchainImagesKHR(vk_swap_chain);
@@ -73,7 +74,7 @@ export namespace vfw
 				auto create_info = vk::ImageViewCreateInfo{
 					.image      = image,
 					.viewType   = vk::ImageViewType::e2D,
-					.format     = vk_sc_format,
+					.format     = vk_sc_img_fmt,
 					.components = {
 						.r = vk::ComponentSwizzle::eIdentity,
 						.g = vk::ComponentSwizzle::eIdentity,
@@ -96,7 +97,7 @@ export namespace vfw
 		void create_renderpass()
 		{
 			auto color_attachment = vk::AttachmentDescription{
-				.format         = vk_sc_format,
+				.format         = vk_sc_img_fmt,
 				.samples        = vk::SampleCountFlagBits::e1,
 				.loadOp         = vk::AttachmentLoadOp::eClear,
 				.storeOp        = vk::AttachmentStoreOp::eStore,
@@ -185,7 +186,7 @@ export namespace vfw
 	private:
 		vk::Device vk_device;
 		vk::SwapchainKHR vk_swap_chain;
-		vk::Format vk_sc_format;
+		vk::Format vk_sc_img_fmt;
 		vk::Extent2D vk_sc_extent;
 		vk::RenderPass vk_render_pass;
 		std::vector<vk::Image> vk_images;
@@ -201,31 +202,33 @@ namespace
 		using eFmt = vk::Format;
 		using eCS  = vk::ColorSpaceKHR;
 
-		auto format_iter = std::ranges::find_if(sd.formats, [](const vk::SurfaceFormatKHR &sf) {
+		auto format_rng = sd.formats |
+		                  std::views::filter([](auto &&sf) {
 			return sf.format == eFmt::eB8G8R8A8Srgb and sf.colorSpace == eCS::eSrgbNonlinear;
 		});
-
-		if (format_iter == sd.formats.end())
+		if (format_rng.empty())
 		{
 			std::println("Unable to find desired surface format");
 			throw std::runtime_error("Unable to find desired surface format");
 		}
 
-		return *format_iter;
+		return *format_rng.begin();
 	}
 
 	auto pick_present_mode(const surface_details &sd) -> vk::PresentModeKHR
 	{
-		auto mode_iter = std::ranges::find_if(sd.present_modes, [](const vk::PresentModeKHR &pm) {
+		auto mode_rng = sd.present_modes |
+		                std::views::filter([](auto &&pm) {
 			return pm == vk::PresentModeKHR::eFifoRelaxed;
 		});
 
-		if (mode_iter == sd.present_modes.end())
+		if (mode_rng.empty())
 		{
-			throw std::runtime_error("Unable to find desired surface format");
+			std::println("Unable to find desired presentation mode");
+			throw std::runtime_error("Unable to find desired presentation mode");
 		}
 
-		return *mode_iter;
+		return *mode_rng.begin();
 	}
 
 	auto pick_surface_extent(const surface_details &sd) -> vk::Extent2D
@@ -243,10 +246,10 @@ using namespace vfw;
 
 void swap_chain::create_swap_chain(const vk::SurfaceKHR &surface, const queue_family &qf, const surface_details &sd)
 {
-	auto sf      = pick_surface_format(sd);
-	auto pm      = pick_present_mode(sd);
-	vk_sc_extent = pick_surface_extent(sd);
-	vk_sc_format = sf.format;
+	auto sf       = pick_surface_format(sd);
+	auto pm       = pick_present_mode(sd);
+	vk_sc_extent  = pick_surface_extent(sd);
+	vk_sc_img_fmt = sf.format;
 
 	auto image_count = std::clamp(0u, sd.capabilities.minImageCount + 1, sd.capabilities.maxImageCount);
 	auto ism         = (qf.graphics_family == qf.present_family) ? vk::SharingMode::eExclusive

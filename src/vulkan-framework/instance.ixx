@@ -128,30 +128,6 @@ export namespace vfw
 				out.present_family = static_cast<uint32_t>(std::get<0>(*pf_rng.begin()));
 			}
 
-			/* Old logic
-			auto queue_family_iter = std::ranges::find_if(queue_families, [&](vk::QueueFamilyProperties &qf) -> bool {
-			    return static_cast<bool>(qf.queueFlags & vk::QueueFlagBits::eGraphics);
-			});
-
-			if (queue_family_iter != queue_families.end())
-			{
-			    out.graphics_family = static_cast<uint32_t>(std::distance(queue_families.begin(), queue_family_iter));
-			}
-
-			auto queue_idx{ 0 };
-			queue_family_iter = std::ranges::find_if(queue_families, [&]([[maybe_unused]] vk::QueueFamilyProperties &qf) -> bool {
-			    auto present_support = device.getSurfaceSupportKHR(queue_idx, vk_surface);
-			    queue_idx++;
-
-			    return static_cast<bool>(present_support);
-			});
-
-			if (queue_family_iter != queue_families.end())
-			{
-			    out.present_family = static_cast<uint32_t>(std::distance(queue_families.begin(), queue_family_iter));
-			}
-			*/
-
 			return out;
 		}
 
