@@ -13,6 +13,7 @@ export namespace vfw
 		vk::SurfaceCapabilitiesKHR capabilities;
 		std::vector<vk::SurfaceFormatKHR> formats;
 		std::vector<vk::PresentModeKHR> present_modes;
+		vk::Format depth_format;
 	};
 
 	struct queue_family
@@ -84,10 +85,25 @@ export namespace vfw
 
 		auto query_surface_details(const vk::PhysicalDevice &device) const -> surface_details
 		{
+			auto candidates = std::array{ vk::Format::eD32Sfloat, vk::Format::eD32SfloatS8Uint, vk::Format::eD24UnormS8Uint };
+
+			auto format_rng = candidates |
+			                  std::views::filter([&](auto &&format) -> bool {
+				auto props = device.getFormatProperties(format);
+				return bool(props.optimalTilingFeatures & vk::FormatFeatureFlagBits::eDepthStencilAttachment);
+			});
+
+			if (format_rng.empty())
+			{
+				std::println("Could not find compatible depth format.");
+				throw std::runtime_error("Could not find compatible depth format.");
+			}
+
 			return surface_details{
 				.capabilities  = device.getSurfaceCapabilitiesKHR(vk_surface),
 				.formats       = device.getSurfaceFormatsKHR(vk_surface),
-				.present_modes = device.getSurfacePresentModesKHR(vk_surface)
+				.present_modes = device.getSurfacePresentModesKHR(vk_surface),
+				.depth_format  = *format_rng.begin()
 			};
 		}
 

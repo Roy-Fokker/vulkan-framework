@@ -91,6 +91,43 @@ export namespace vfw
 
 				image_view = vk_device.createImageView(create_info);
 			}
+
+			vk_depth_images.resize(vk_images.size());
+			vk_depth_views.resize(vk_depth_images.size());
+			vk_depth_memory.resize(vk_depth_images.size());
+
+			for (auto &&[depth_image, depth_view, depth_memory] : std::views::zip(vk_depth_images, vk_depth_views, vk_depth_memory))
+			{
+				auto img_create_info = vk::ImageCreateInfo{
+					.imageType = vk::ImageType::e2D,
+					.format    = vk_sc_dpt_fmt,
+
+					.extent = {
+						.width  = vk_sc_extent.width,
+						.height = vk_sc_extent.height,
+						.depth  = 1,
+					},
+
+					.mipLevels   = 1,
+					.arrayLayers = 1,
+					.usage       = vk::ImageUsageFlagBits::eDepthStencilAttachment,
+				};
+				depth_image = vk_device.createImage(img_create_info);
+
+				auto view_create_info = vk::ImageViewCreateInfo{
+					.image            = depth_image,
+					.viewType         = vk::ImageViewType::e2D,
+					.format           = vk_sc_dpt_fmt,
+					.subresourceRange = {
+						.aspectMask     = vk::ImageAspectFlagBits::eDepth,
+						.baseMipLevel   = 0,
+						.levelCount     = 1,
+						.baseArrayLayer = 0,
+						.layerCount     = 1,
+					},
+				};
+				depth_view = vk_device.createImageView(view_create_info);
+			}
 		}
 
 		void create_renderpass()
@@ -111,24 +148,46 @@ export namespace vfw
 				.layout     = vk::ImageLayout::eColorAttachmentOptimal
 			};
 
+			auto depth_attachment = vk::AttachmentDescription{
+				.format         = vk_sc_dpt_fmt,
+				.samples        = vk::SampleCountFlagBits::e1,
+				.loadOp         = vk::AttachmentLoadOp::eClear,
+				.storeOp        = vk::AttachmentStoreOp::eDontCare,
+				.stencilLoadOp  = vk::AttachmentLoadOp::eDontCare,
+				.stencilStoreOp = vk::AttachmentStoreOp::eDontCare,
+				.initialLayout  = vk::ImageLayout::eUndefined,
+				.finalLayout    = vk::ImageLayout::eDepthStencilAttachmentOptimal
+			};
+
+			auto depth_attachment_ref = vk::AttachmentReference{
+				.attachment = 1,
+				.layout     = vk::ImageLayout::eDepthStencilAttachmentOptimal
+			};
+
+			auto attachments = std::array{
+				color_attachment,
+				depth_attachment,
+			};
+
 			auto sub_pass = vk::SubpassDescription{
-				.pipelineBindPoint    = vk::PipelineBindPoint::eGraphics,
-				.colorAttachmentCount = 1,
-				.pColorAttachments    = &color_attachment_ref
+				.pipelineBindPoint       = vk::PipelineBindPoint::eGraphics,
+				.colorAttachmentCount    = 1,
+				.pColorAttachments       = &color_attachment_ref,
+				.pDepthStencilAttachment = &depth_attachment_ref
 			};
 
 			auto dependency = vk::SubpassDependency{
 				.srcSubpass    = VK_SUBPASS_EXTERNAL,
 				.dstSubpass    = 0,
-				.srcStageMask  = vk::PipelineStageFlagBits::eColorAttachmentOutput,
-				.dstStageMask  = vk::PipelineStageFlagBits::eColorAttachmentOutput,
+				.srcStageMask  = vk::PipelineStageFlagBits::eColorAttachmentOutput | vk::PipelineStageFlagBits::eEarlyFragmentTests,
+				.dstStageMask  = vk::PipelineStageFlagBits::eColorAttachmentOutput | vk::PipelineStageFlagBits::eEarlyFragmentTests,
 				.srcAccessMask = vk::AccessFlagBits::eNone,
-				.dstAccessMask = vk::AccessFlagBits::eColorAttachmentWrite
+				.dstAccessMask = vk::AccessFlagBits::eColorAttachmentWrite | vk::AccessFlagBits::eDepthStencilAttachmentWrite
 			};
 
 			auto create_info = vk::RenderPassCreateInfo{
-				.attachmentCount = 1,
-				.pAttachments    = &color_attachment,
+				.attachmentCount = static_cast<uint32_t>(attachments.size()),
+				.pAttachments    = attachments.data(),
 				.subpassCount    = 1,
 				.pSubpasses      = &sub_pass,
 				.dependencyCount = 1,
@@ -142,9 +201,9 @@ export namespace vfw
 		{
 			vk_frame_buffers.resize(vk_image_views.size());
 
-			for (auto &&[image_view, frame_buffer] : std::views::zip(vk_image_views, vk_frame_buffers))
+			for (auto &&[image_view, depth_view, frame_buffer] : std::views::zip(vk_image_views, vk_depth_views, vk_frame_buffers))
 			{
-				auto attachments = std::vector<vk::ImageView>{ image_view };
+				auto attachments = std::vector<vk::ImageView>{ image_view, depth_view };
 				auto create_info = vk::FramebufferCreateInfo{
 					.renderPass      = vk_render_pass,
 					.attachmentCount = static_cast<uint32_t>(attachments.size()),
@@ -160,6 +219,15 @@ export namespace vfw
 
 		void destroy_images()
 		{
+			for (auto &&[image, image_view] : std::views::zip(vk_depth_images, vk_depth_views))
+			{
+				if (image_view)
+				{
+					vk_device.destroyImageView(image_view);
+					image_view = nullptr;
+				}
+			}
+
 			for (auto &&[image, image_view] : std::views::zip(vk_images, vk_image_views))
 			{
 				if (image_view)
@@ -185,11 +253,15 @@ export namespace vfw
 	private:
 		vk::Device vk_device;
 		vk::SwapchainKHR vk_swap_chain;
-		vk::Format vk_sc_format;
+		vk::Format vk_sc_img_fmt;
+		vk::Format vk_sc_dpt_fmt;
 		vk::Extent2D vk_sc_extent;
 		vk::RenderPass vk_render_pass;
 		std::vector<vk::Image> vk_images;
 		std::vector<vk::ImageView> vk_image_views;
+		std::vector<vk::Image> vk_depth_images;
+		std::vector<vk::ImageView> vk_depth_views;
+		std::vector<vk::DeviceMemory> vk_depth_memory;
 		std::vector<vk::Framebuffer> vk_frame_buffers;
 	};
 }
@@ -243,10 +315,11 @@ using namespace vfw;
 
 void swap_chain::create_swap_chain(const vk::SurfaceKHR &surface, const queue_family &qf, const surface_details &sd)
 {
-	auto sf      = pick_surface_format(sd);
-	auto pm      = pick_present_mode(sd);
-	vk_sc_extent = pick_surface_extent(sd);
-	vk_sc_format = sf.format;
+	auto sf       = pick_surface_format(sd);
+	auto pm       = pick_present_mode(sd);
+	vk_sc_extent  = pick_surface_extent(sd);
+	vk_sc_img_fmt = sf.format;
+	vk_sc_dpt_fmt = sd.depth_format;
 
 	auto image_count = std::clamp(0u, sd.capabilities.minImageCount + 1, sd.capabilities.maxImageCount);
 	auto ism         = (qf.graphics_family == qf.present_family) ? vk::SharingMode::eExclusive
