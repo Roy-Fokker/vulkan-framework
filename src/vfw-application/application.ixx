@@ -6,6 +6,7 @@ import std;
 
 import input;
 import window;
+import clock;
 
 import vfw;
 
@@ -22,47 +23,22 @@ export namespace app_base
 		application() = delete;
 		explicit application(std::uint32_t &rndr)
 		{
-			on_keypress = [&](input::button button_, std::uint16_t scan_code, bool isKeyDown, std::uint16_t repeat_count) -> bool {
-				std::println("⌚: {:>5.2f}s, ⏱️: {}ns, ⌨️: {:10.10}, 📑: {:>5}, 🔽: {:^5}, 🔁: {:>3}",
-				             tt, dt, input::to_string(button_), scan_code, isKeyDown, repeat_count);
-
-				switch (button_)
-				{
-					using enum input::button;
-
-				case escape:
-				{
-					close = true;
-					break;
-				}
-				}
-
-				return true;
-			};
-
-			on_resize = [&](std::uint32_t width, std::uint32_t height) -> bool {
-				std::println("⌚: {:>5.2f}s, ⏱️: {}ns, Width: {:>5}, Height: {:>5}",
-				             tt, dt, width, height);
-
-				return true;
-			};
-
-			on_activate = [&](win32::window::active_state is_active, bool minimized) -> bool {
-				auto state = (is_active == win32::window::active_state::active) ? true : false;
-
-				std::println("⌚: {:>5.2f}s, ⏱️: {}s, Active: {:^5}, Minimized: {:^5}",
-				             tt, dt, state, minimized);
-
-				return true;
-			};
-
 			setup_renderer(rndr);
 		}
 
-		void update(double delta_time, double total_time)
+		void update(const std_clock::timer &clk, const win32::input &inpt)
 		{
-			dt = delta_time;
-			tt = total_time;
+			dt = clk.get_delta<std_clock::s>();
+			tt = clk.get_total<std_clock::s>();
+
+			using enum win32::input_button;
+
+			if (inpt.is_button_down(escape))
+			{
+				close = true;
+				std::println("⌚: {:>5.2f}s, ⏱️: {}ns, ⌨️: {:10.10}",
+				             tt, dt, win32::to_string(escape));
+			}
 
 			constant.pos.x += static_cast<float>(dt);
 			if (constant.pos.x > 1.5f)
@@ -76,9 +52,23 @@ export namespace app_base
 			return not close;
 		}
 
-		win32::window::keypress_callback on_keypress{};
-		win32::window::resize_callback on_resize{};
-		win32::window::activate_callback on_activate{};
+		auto on_resize(std::uint32_t width, std::uint32_t height) -> bool
+		{
+			std::println("⌚: {:>5.2f}s, ⏱️: {}ns, Width: {:>5}, Height: {:>5}",
+			             tt, dt, width, height);
+
+			return true;
+		}
+
+		auto on_activate(win32::window::active_state is_active, bool minimized) -> bool
+		{
+			auto state = (is_active == win32::window::active_state::active) ? true : false;
+
+			std::println("⌚: {:>5.2f}s, ⏱️: {}s, Active: {:^5}, Minimized: {:^5}",
+			             tt, dt, state, minimized);
+
+			return true;
+		}
 
 	private:
 		auto read_file(const std::filesystem::path &filename) -> std::vector<uint32_t>
@@ -112,7 +102,6 @@ export namespace app_base
 		{
 			auto vert_shader_bin = read_file("shaders/basic_pc_shader.vert.spv");
 			auto frag_shader_bin = read_file("shaders/basic_pc_shader.frag.spv");
-
 		}
 
 		void setup_model(std::uint32_t &rndr)

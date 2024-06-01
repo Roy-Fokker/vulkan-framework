@@ -21,28 +21,26 @@ auto main() -> int
 
 	auto rndr = 0u;
 	auto app = app_base::application(rndr);
-	wnd.set_callback(app.on_keypress);
+	
 	wnd.set_callback([&](std::uint32_t width, std::uint32_t height) {
 		return app.on_resize(width, height);
 	});
 	wnd.set_callback(app.on_activate);
 
-	auto clk = timer::clock();
+	auto clk = std_clock::timer();
+	auto inpt = win32::input(wnd.handle(), { win32::input_device::keyboard, win32::input_device::mouse });
 
 	while (wnd.handle() and app.should_continue())
 	{
 		clk.tick();
 
-		auto dt = clk.get_delta<timer::s>();
-		auto tt = clk.get_total<timer::s>();
+		app.update(clk, inpt);
 
-		app.update(dt, tt);
-
-
+		inpt.process_messages();
 		wnd.process_messages();
 	}
 
-	std::println("Loop run time: {:>5.2f}s", clk.get_total<timer::s>());
+	std::println("Loop run time: {:>5.2f}s", clk.get_total<std_clock::s>());
 
 	return 0;
 }

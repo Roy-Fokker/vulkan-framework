@@ -1,11 +1,10 @@
 module;
 
-#include <windows.h>
+#include <Windows.h>
 
 export module window;
 
 import std;
-
 import input;
 
 using namespace std::string_view_literals;
@@ -15,11 +14,12 @@ export namespace win32
 	class window final
 	{
 	public:
-		struct description
+		enum class style
 		{
-			std::uint16_t width;
-			std::uint16_t height;
-			std::wstring_view title;
+			window_sizable,
+			window_fixed,
+			borderless,
+			fullscreen,
 		};
 
 		enum class active_state
@@ -28,11 +28,26 @@ export namespace win32
 			inactive,
 		};
 
-		using keypress_callback = std::function<bool(input::button button, std::uint16_t scan_code, bool isKeyDown, std::uint16_t repeat_count)>;
+		using keypress_callback = std::function<bool(input_button button, std::uint16_t scan_code, bool isKeyDown, std::uint16_t repeat_count)>;
 		using resize_callback   = std::function<bool(std::uint32_t width, std::uint32_t height)>;
 		using activate_callback = std::function<bool(active_state is_active, bool minimized)>;
 
-	public:
+		struct description
+		{
+			std::uint16_t width;
+			std::uint16_t height;
+			std::wstring_view title;
+			style style = style::window_sizable;
+			std::uint16_t icon = NULL;
+		};
+
+		window() = delete;
+		window(const window &src)            = delete;
+		window &operator=(const window &src) = delete;
+		window(window &&src)                 = delete;
+		window &operator=(window &&src)      = delete;
+		~window() = default;
+
 		window(const description &desc)
 		{
 			window_impl = std::make_unique<window_implementation>();
@@ -48,18 +63,63 @@ export namespace win32
 			window_impl->Create(nullptr, window_rectangle, desc.title,
 			                    default_window_style, default_window_style_ex);
 
-			/*
-			if (window_icon)
+			change_style(desc.style);
+			
+			// TODO: Test icon functionality, add ability to use png resource
+			if (desc.icon not_eq NULL)
 			{
-			    auto icon = LoadIcon(GetModuleHandle(nullptr), MAKEINTRESOURCE(window_icon));
+			    auto icon = LoadIcon(GetModuleHandle(nullptr), MAKEINTRESOURCE(desc.icon));
 			    window_impl->SetIcon(icon);
 			}
-			*/
+			
 
 			window_impl->CenterWindow();
 		}
 
-		~window() = default;
+		void change_style(style window_style)
+		{
+			DWORD clear_style    = WS_POPUP | WS_BORDER | WS_MINIMIZEBOX | WS_OVERLAPPEDWINDOW,
+				  clear_style_ex = WS_EX_OVERLAPPEDWINDOW | WS_EX_LAYERED | WS_EX_COMPOSITED;
+
+			DWORD new_style{},
+				new_style_ex{};
+			switch (window_style)
+			{
+			case style::window_fixed:
+				new_style    = WS_OVERLAPPEDWINDOW ^ WS_THICKFRAME,
+				new_style_ex = WS_EX_OVERLAPPEDWINDOW;
+				break;
+			case style::window_sizable:
+				new_style = WS_OVERLAPPEDWINDOW;
+				new_style_ex = WS_EX_OVERLAPPEDWINDOW;
+				break;
+			case style::borderless:
+			case style::fullscreen:
+				new_style = WS_POPUP | WS_MINIMIZEBOX;
+				break;
+			}
+
+			RECT draw_area{};
+			window_impl->GetClientRect(&draw_area);
+
+			window_impl->ModifyStyle(clear_style, new_style, SWP_FRAMECHANGED);
+			window_impl->ModifyStyleEx(clear_style_ex, new_style_ex, SWP_FRAMECHANGED);
+
+			window_impl->ResizeClient(draw_area.right, draw_area.bottom);
+
+			window_impl->CenterWindow();
+
+			if (window_style == style::fullscreen)
+			{
+				MONITORINFO monitor_info{ sizeof(MONITORINFO) };
+
+				GetMonitorInfo(MonitorFromWindow(window_impl->m_hWnd, MONITOR_DEFAULTTONEAREST), &monitor_info);
+
+				window_impl->SetWindowPos(HWND_TOP,
+				                          &monitor_info.rcMonitor,
+				                          SWP_NOOWNERZORDER | SWP_FRAMECHANGED);
+			}
+		}
 
 		void show()
 		{
@@ -69,25 +129,32 @@ export namespace win32
 
 		void process_messages()
 		{
-			auto has_more_messages = BOOL{ TRUE };
-			while (has_more_messages)
-			{
-				MSG msg{};
+			auto process_range = [](UINT min, UINT max) {
+				auto has_more_messages = BOOL{ TRUE };
+				while (has_more_messages)
+				{
+					MSG msg{};
 
-				// Parameter two here has to be nullptr, putting hWnd here will
-				// not retrive WM_QUIT messages, as those are posted to the thread
-				// and not the window
-				has_more_messages = PeekMessage(&msg, nullptr, NULL, NULL, PM_REMOVE);
-				if (msg.message == WM_QUIT)
-				{
-					return;
+					// TODO: verify below statement is true. it seems to work with Handle provided.
+					// Parameter two here has to be nullptr, putting hWnd here will
+					// not retrive WM_QUIT messages, as those are posted to the thread
+					// and not the window
+					has_more_messages = PeekMessage(&msg, nullptr, min, max, PM_NOYIELD | PM_REMOVE);
+					if (msg.message == WM_QUIT)
+					{
+						return;
+					}
+					else
+					{
+						TranslateMessage(&msg);
+						DispatchMessage(&msg);
+					}
 				}
-				else
-				{
-					TranslateMessage(&msg);
-					DispatchMessage(&msg);
-				}
-			}
+			};
+
+			// Avoid process WM_INPUT, for raw input to work
+			process_range(0, (WM_INPUT - 1));
+			process_range((WM_INPUT + 1), 0xFFFFFFFF);
 		}
 
 		[[nodiscard]] auto handle() const -> HWND
@@ -116,7 +183,7 @@ export namespace win32
 
 		struct window_implementation
 		{
-			static constexpr std::wstring_view CLASSNAME = L"PureWin32Window"sv;
+			static constexpr auto CLASSNAME = L"PureWin32Window"sv;
 
 			window_implementation()
 			{
@@ -180,11 +247,11 @@ export namespace win32
 				}
 			}
 
-			// void SetIcon(HICON icon) const
-			// {
-			// 	SendMessageW(m_hWnd, WM_SETICON, ICON_BIG, (LPARAM)icon);
-			// 	SendMessageW(m_hWnd, WM_SETICON, ICON_SMALL, (LPARAM)icon);
-			// }
+			 void SetIcon(HICON icon) const
+			 {
+			 	SendMessageW(m_hWnd, WM_SETICON, ICON_BIG, (LPARAM)icon);
+			 	SendMessageW(m_hWnd, WM_SETICON, ICON_SMALL, (LPARAM)icon);
+			 }
 
 			void GetClientRect(RECT *window_rectangle) const
 			{
@@ -355,7 +422,7 @@ export namespace win32
 						isKeyReleased = not(GetKeyState(vkCode) & 0x0001);
 					}
 
-					auto button = static_cast<input::button>(vkCode);
+					auto button = static_cast<input_button>(vkCode);
 
 					return on_keypress(button, scanCode, !isKeyReleased, repeatCount);
 
@@ -373,4 +440,15 @@ export namespace win32
 			window::resize_callback on_resize     = nullptr;
 		};
 	};
+
+	auto get_window_size(HWND window_handle) -> const std::array<uint16_t, 2>
+	{
+		RECT rect{};
+		GetClientRect(window_handle, &rect);
+
+		return {
+			static_cast<std::uint16_t>(rect.right - rect.left),
+			static_cast<std::uint16_t>(rect.bottom - rect.top)
+		};
+	}
 }

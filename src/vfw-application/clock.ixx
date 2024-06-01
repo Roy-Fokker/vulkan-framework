@@ -4,7 +4,9 @@ export module clock;
 
 import std;
 
-export namespace timer
+// Something is using symbol 'clock' in this configuration. 
+// what is it?
+export namespace std_clock
 {
 	using hrc = std::chrono::high_resolution_clock;
 	using ns  = std::chrono::duration<double, std::nano>;
@@ -12,7 +14,7 @@ export namespace timer
 	using ms  = std::chrono::duration<double, std::milli>;
 	using s   = std::chrono::duration<double, std::ratio<1>>;
 
-	class clock
+	class timer
 	{
 	public:
 		void tick()
