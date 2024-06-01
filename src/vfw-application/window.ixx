@@ -8,7 +8,7 @@ using namespace std::string_view_literals;
 
 export namespace win32
 {
-	class window
+	class window final
 	{
 	public:
 		struct description
