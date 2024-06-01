@@ -34,22 +34,16 @@ target_precompile_headers(${PRJ_LIB_NAME}
 
 # source files for this app
 target_sources(${PRJ_LIB_NAME}
+	# magic encantations for C++ Modules Support in CMake
 	PUBLIC FILE_SET vfw_modules TYPE CXX_MODULES FILES
 		vulkan-framework.ixx
-		renderer.ixx
-		instance.ixx
-		device.ixx
-		swap_chain.ixx
-		pipeline.ixx
-		buffer.ixx
-		vertex.ixx
 )
 
 # libraries used by vke
 target_link_libraries(${PRJ_LIB_NAME}
 	PRIVATE
-		std23
-		Vulkan::Vulkan
-		glm::glm
-		fmt::fmt
+		std23modules   # precompiled mdoules for C++ 23 Standard Libary
+		Vulkan::Vulkan # Vulkan SDK
+		glm::glm       # glm library
+		fmt::fmt       # fmt library
 )
