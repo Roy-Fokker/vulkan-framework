@@ -1,3 +1,5 @@
+import std;
+
 import clock;
 import input;
 import window;
@@ -17,12 +19,10 @@ auto main() -> int
 
 	wnd.show();
 
-	auto rndr = vfw::renderer(wnd.handle());
-
+	auto rndr = 0u;
 	auto app = app_base::application(rndr);
 	wnd.set_callback(app.on_keypress);
 	wnd.set_callback([&](std::uint32_t width, std::uint32_t height) {
-		rndr.window_resized(wnd.handle());
 		return app.on_resize(width, height);
 	});
 	wnd.set_callback(app.on_activate);
@@ -38,7 +38,6 @@ auto main() -> int
 
 		app.update(dt, tt);
 
-		rndr.draw_frame();
 
 		wnd.process_messages();
 	}

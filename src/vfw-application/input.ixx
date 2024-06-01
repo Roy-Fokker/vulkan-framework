@@ -2,6 +2,8 @@ module;
 
 export module input;
 
+import std;
+
 export namespace input
 {
 	enum class button : std::uint8_t

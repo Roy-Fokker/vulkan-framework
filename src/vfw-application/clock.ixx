@@ -2,6 +2,8 @@ module;
 
 export module clock;
 
+import std;
+
 export namespace timer
 {
 	using hrc = std::chrono::high_resolution_clock;

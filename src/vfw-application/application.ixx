@@ -2,6 +2,8 @@ module;
 
 export module application;
 
+import std;
+
 import input;
 import window;
 
@@ -18,7 +20,7 @@ export namespace app_base
 	{
 	public:
 		application() = delete;
-		explicit application(vfw::renderer &rndr)
+		explicit application(std::uint32_t &rndr)
 		{
 			on_keypress = [&](input::button button_, std::uint16_t scan_code, bool isKeyDown, std::uint16_t repeat_count) -> bool {
 				std::println("⌚: {:>5.2f}s, ⏱️: {}ns, ⌨️: {:10.10}, 📑: {:>5}, 🔽: {:^5}, 🔁: {:>3}",
@@ -99,74 +101,26 @@ export namespace app_base
 			return buffer;
 		}
 
-		void setup_renderer(vfw::renderer &rndr)
+		void setup_renderer(std::uint32_t &rndr)
 		{
-			rndr.set_clear_color({ 0.4f, 0.4f, 0.2f, 1.f });
-
 			setup_pipeline(rndr);
 			setup_model(rndr);
 			add_draw_cmds(rndr);
 		}
 
-		void setup_pipeline(vfw::renderer &rndr)
+		void setup_pipeline(std::uint32_t &rndr)
 		{
 			auto vert_shader_bin = read_file("shaders/basic_pc_shader.vert.spv");
 			auto frag_shader_bin = read_file("shaders/basic_pc_shader.frag.spv");
 
-			rndr.add_pipeline({
-				.shaders = {
-					{ vk::ShaderStageFlagBits::eVertex, vert_shader_bin },
-					{ vk::ShaderStageFlagBits::eFragment, frag_shader_bin },
-				},
-
-				.input_attributes = vfw::vertex::get_attribute_descriptions(),
-				.input_bindings   = vfw::vertex::get_binding_descriptions(),
-
-				.push_constants = std::array{
-					vk::PushConstantRange{
-						.stageFlags = vk::ShaderStageFlagBits::eVertex,
-						.offset     = 0,
-						.size       = sizeof(push_constant),
-					},
-				},
-
-				.topology     = { vk::PrimitiveTopology::eTriangleList },
-				.polygon_mode = { vk::PolygonMode::eFill },
-				.cull_mode    = { vk::CullModeFlagBits::eBack },
-				.front_face   = { vk::FrontFace::eClockwise },
-			});
 		}
 
-		void setup_model(vfw::renderer &rndr)
+		void setup_model(std::uint32_t &rndr)
 		{
-			vertices = {
-				{ { 0.0f, 0.5f }, { 1.0f, 0.0f, 0.0f } },
-				{ { 0.5f, -0.5f }, { 0.0f, 1.0f, 0.0f } },
-				{ { -0.5f, -0.5f }, { 0.0f, 0.0f, 1.0f } },
-			};
-
-			model_idx = rndr.add_buffer({
-				.buffer_size  = vertices.size() * sizeof(vfw::vertex),
-				.buffer_data  = reinterpret_cast<const void *>(vertices.data()),
-				.usage        = vk::BufferUsageFlagBits::eVertexBuffer,
-				.sharing_mode = vk::SharingMode::eExclusive,
-			});
 		}
 
-		void add_draw_cmds(vfw::renderer &rndr)
+		void add_draw_cmds(std::uint32_t &rndr)
 		{
-			rndr.draw_vb_cmd({
-				.buffer_idx     = model_idx,
-				.vertex_count   = static_cast<uint32_t>(vertices.size()),
-				.instance_count = 1,
-				.vertex_offset  = 0,
-				.index_offset   = 0,
-
-				.constant = {
-					.data = reinterpret_cast<const void *>(&constant),
-					.size = sizeof(constant),
-				},
-			});
 		}
 
 	private:
@@ -174,7 +128,6 @@ export namespace app_base
 		double dt  = 0.f;
 		double tt  = 0.f;
 
-		std::vector<vfw::vertex> vertices{};
 		uint32_t model_idx{};
 
 		push_constant constant = {

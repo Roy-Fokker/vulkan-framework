@@ -1,6 +1,10 @@
 module;
 
+#include <windows.h>
+
 export module window;
+
+import std;
 
 import input;
 

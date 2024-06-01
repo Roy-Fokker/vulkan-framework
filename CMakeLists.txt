@@ -18,11 +18,11 @@ set(CXX_STANDARD_REQUIRED ON)
 # include logic to build glsl files
 include(cmake/glsl_compiler.cmake)
 
+# C++ Standard library modules
+include(cmake/std23modules.cmake)
+
 # shader source folder
 add_subdirectory(src/shaders)
-
-# C++ Standard library precompile source folder
-add_subdirectory(src/std23)
 
 # Vulkan framework library source folder
 add_subdirectory(src/vulkan-framework)
