@@ -440,14 +440,14 @@ export namespace win32
 		mouse,
 	};
 
-		class input final
+	class input final
 	{
 	public:
-		input() = delete;
-		input(const input &src)             = delete;
-		input &operator=(const input &src)  = delete;
-		input(input &&src)                  = delete;
-		input &operator=(input &&src)       = delete;
+		input()                            = delete;
+		input(const input &src)            = delete;
+		input &operator=(const input &src) = delete;
+		input(input &&src)                 = delete;
+		input &operator=(input &&src)      = delete;
 
 		input(HWND hWnd, const std::vector<input_device> &devices);
 		~input() = default;
@@ -457,7 +457,7 @@ export namespace win32
 		// Which Direction to go in, returns 1, -1, or 0
 		auto which_button_is_down(input_button positive_button, input_button negative_button) const -> std::int8_t
 		{
-			return (is_button_down(positive_button) ? 1 : 0) | 
+			return (is_button_down(positive_button) ? 1 : 0) |
 			       (is_button_down(negative_button) ? -1 : 0);
 		}
 
@@ -475,7 +475,6 @@ export namespace win32
 
 			return axis_values_relative.at(static_cast<std::size_t>(axis));
 		}
-
 
 	private:
 		void process_input(std::uint32_t count)
@@ -518,7 +517,6 @@ export namespace win32
 	};
 }
 
-
 namespace
 {
 	using namespace win32;
@@ -550,7 +548,7 @@ namespace
 		switch (static_cast<input_button>(vKey))
 		{
 		case input_button::pause:
-			sCode = (isE1) ? 0x45 : static_cast<std::uint16_t>( MapVirtualKey(vKey, MAPVK_VK_TO_VSC));
+			sCode = (isE1) ? 0x45 : static_cast<std::uint16_t>(MapVirtualKey(vKey, MAPVK_VK_TO_VSC));
 			// TODO: What happens here????
 			break;
 		case input_button::shift:
@@ -760,8 +758,8 @@ void input::process_mouse_input(const RAWMOUSE &data)
 	// TODO: Figure out what new key states [up, down, pressed]
 	buttons_down[vBtn] = btnState;
 
-	std::int32_t xPos = data.lLastX;
-	std::int32_t yPos = data.lLastY;
+	std::int32_t xPos   = data.lLastX;
+	std::int32_t yPos   = data.lLastY;
 	std::int16_t rWheel = data.usButtonData;
 
 	if (data.usFlags & MOUSE_MOVE_ABSOLUTE)

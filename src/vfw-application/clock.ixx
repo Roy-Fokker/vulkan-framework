@@ -4,7 +4,7 @@ export module clock;
 
 import std;
 
-// Something is using symbol 'clock' in this configuration. 
+// Something is using symbol 'clock' in this configuration.
 // what is it?
 export namespace std_clock
 {

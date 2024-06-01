@@ -37,16 +37,16 @@ export namespace win32
 			std::uint16_t width;
 			std::uint16_t height;
 			std::wstring_view title;
-			style style = style::window_sizable;
+			style style        = style::window_sizable;
 			std::uint16_t icon = NULL;
 		};
 
-		window() = delete;
+		window()                             = delete;
 		window(const window &src)            = delete;
 		window &operator=(const window &src) = delete;
 		window(window &&src)                 = delete;
 		window &operator=(window &&src)      = delete;
-		~window() = default;
+		~window()                            = default;
 
 		window(const description &desc)
 		{
@@ -64,14 +64,13 @@ export namespace win32
 			                    default_window_style, default_window_style_ex);
 
 			change_style(desc.style);
-			
+
 			// TODO: Test icon functionality, add ability to use png resource
 			if (desc.icon not_eq NULL)
 			{
-			    auto icon = LoadIcon(GetModuleHandle(nullptr), MAKEINTRESOURCE(desc.icon));
-			    window_impl->SetIcon(icon);
+				auto icon = LoadIcon(GetModuleHandle(nullptr), MAKEINTRESOURCE(desc.icon));
+				window_impl->SetIcon(icon);
 			}
-			
 
 			window_impl->CenterWindow();
 		}
@@ -90,7 +89,7 @@ export namespace win32
 				new_style_ex = WS_EX_OVERLAPPEDWINDOW;
 				break;
 			case style::window_sizable:
-				new_style = WS_OVERLAPPEDWINDOW;
+				new_style    = WS_OVERLAPPEDWINDOW;
 				new_style_ex = WS_EX_OVERLAPPEDWINDOW;
 				break;
 			case style::borderless:
@@ -247,11 +246,11 @@ export namespace win32
 				}
 			}
 
-			 void SetIcon(HICON icon) const
-			 {
-			 	SendMessageW(m_hWnd, WM_SETICON, ICON_BIG, (LPARAM)icon);
-			 	SendMessageW(m_hWnd, WM_SETICON, ICON_SMALL, (LPARAM)icon);
-			 }
+			void SetIcon(HICON icon) const
+			{
+				SendMessageW(m_hWnd, WM_SETICON, ICON_BIG, (LPARAM)icon);
+				SendMessageW(m_hWnd, WM_SETICON, ICON_SMALL, (LPARAM)icon);
+			}
 
 			void GetClientRect(RECT *window_rectangle) const
 			{
