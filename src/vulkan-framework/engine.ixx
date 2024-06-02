@@ -28,7 +28,7 @@ export namespace vfw
 			auto vkb_inst = create_instance();
 			create_surface(hWnd);
 			pick_device_and_queue(vkb_inst);
-			init_memory_allocator();
+			create_gpu_memory_allocator();
 		}
 
 		~engine() = default;
@@ -93,7 +93,7 @@ export namespace vfw
 			graphics_queue_family = vkb_device.get_queue_index(vkb::QueueType::graphics).value();
 		}
 
-		void init_memory_allocator()
+		void create_gpu_memory_allocator()
 		{
 			auto allocator_info = VmaAllocatorCreateInfo{
 				.flags          = VMA_ALLOCATOR_CREATE_BUFFER_DEVICE_ADDRESS_BIT,
