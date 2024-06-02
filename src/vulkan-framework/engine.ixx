@@ -9,6 +9,8 @@ export module vfw:engine;
 
 import std;
 
+import :types;
+
 export namespace vfw
 {
 	constexpr auto use_vulkan_validation_layers{
@@ -28,9 +30,28 @@ export namespace vfw
 			create_surface(hWnd);
 			pick_device_and_queue(vkb_inst);
 			create_gpu_memory_allocator();
+
+			auto [width, height] = get_window_size(hWnd);
+			create_swapchain(width, height);
 		}
 
-		~engine() = default;
+		~engine()
+		{
+			destroy_swapchain();
+
+			destroy_gpu_memory_allocator();
+			destroy_surface();
+			device.destroy();
+			vkb::destroy_debug_utils_messenger(instance, debug_messenger);
+			instance.destroy();
+		}
+
+		void window_resized(std::uint32_t width, std::uint32_t height)
+		{
+			destroy_swapchain();
+
+			create_swapchain(width, height);
+		}
 
 	private:
 		auto create_instance() -> vkb::Instance
@@ -58,6 +79,11 @@ export namespace vfw
 			};
 
 			surface = instance.createWin32SurfaceKHR(create_info);
+		}
+
+		void destroy_surface()
+		{
+			instance.destroySurfaceKHR(surface);
 		}
 
 		void pick_device_and_queue(vkb::Instance vkb_inst)
@@ -104,6 +130,131 @@ export namespace vfw
 			vmaCreateAllocator(&allocator_info, &vma_allocator);
 		}
 
+		void destroy_gpu_memory_allocator()
+		{
+			vmaDestroyAllocator(vma_allocator);
+		}
+
+		auto get_window_size(HWND hWnd) -> const std::array<uint16_t, 2>
+		{
+			RECT rect{};
+			GetClientRect(hWnd, &rect);
+
+			return {
+				static_cast<std::uint16_t>(rect.right - rect.left),
+				static_cast<std::uint16_t>(rect.bottom - rect.top)
+			};
+		}
+
+		void create_swapchain(std::uint32_t width, std::uint32_t height)
+		{
+			auto sc_builder = vkb::SwapchainBuilder{ chosen_gpu, device, surface };
+			auto vkb_sc     = sc_builder
+			                  .set_desired_format({
+								  .format     = VK_FORMAT_B8G8R8A8_UNORM,
+								  .colorSpace = VK_COLOR_SPACE_SRGB_NONLINEAR_KHR,
+							  })
+			                  .set_desired_present_mode(VK_PRESENT_MODE_FIFO_KHR)
+			                  .set_desired_extent(width, height)
+			                  .add_image_usage_flags(VK_IMAGE_USAGE_TRANSFER_DST_BIT)
+			                  .build()
+			                  .value();
+
+			swapchain        = vkb_sc.swapchain;
+			swapchain_extent = vkb_sc.extent;
+
+			// TODO: figure out why trying to use std::ranges causes the compiler to ICE.
+			for (auto vk_i : vkb_sc.get_images().value())
+			{
+				swapchain_images.push_back(vk_i);
+			}
+
+			for (auto vk_iv : vkb_sc.get_image_views().value())
+			{
+				swapchain_imageviews.push_back(vk_iv);
+			}
+
+			allocate_image_memory();
+		}
+
+		void destroy_swapchain()
+		{
+			free_image_memory();
+
+			for (auto &&iv : swapchain_imageviews)
+			{
+				device.destroyImageView(iv);
+			}
+			swapchain_imageviews.clear();
+
+			device.destroySwapchainKHR(swapchain);
+		}
+
+		void allocate_image_memory()
+		{
+			auto draw_image_extent = vk::Extent3D{
+				swapchain_extent.width,
+				swapchain_extent.height,
+				1,
+			};
+
+			draw_image = types::allocated_image{
+				.extent = draw_image_extent,
+				.format = vk::Format::eR16G16B16A16Sfloat,
+			};
+
+			auto draw_image_usage = vk::ImageUsageFlags{
+				vk::ImageUsageFlagBits::eTransferSrc |
+				vk::ImageUsageFlagBits::eTransferDst |
+				vk::ImageUsageFlagBits::eStorage |
+				vk::ImageUsageFlagBits::eColorAttachment
+			};
+
+			auto image_ci = vk::ImageCreateInfo{
+				.imageType   = vk::ImageType::e2D,
+				.format      = draw_image.format,
+				.extent      = draw_image.extent,
+				.mipLevels   = 1,
+				.arrayLayers = 1,
+				.samples     = vk::SampleCountFlagBits::e1,
+				.tiling      = vk::ImageTiling::eOptimal,
+				.usage       = draw_image_usage,
+			};
+
+			auto image_ai = VmaAllocationCreateInfo{
+				.usage         = VMA_MEMORY_USAGE_GPU_ONLY,
+				.requiredFlags = VkMemoryPropertyFlags{ VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT },
+			};
+
+			vmaCreateImage(vma_allocator,
+			               reinterpret_cast<VkImageCreateInfo *>(&image_ci),
+			               &image_ai,
+			               reinterpret_cast<VkImage *>(&draw_image.image),
+			               &draw_image.allocation,
+			               nullptr);
+
+			auto view_ci = vk::ImageViewCreateInfo{
+				.image            = draw_image.image,
+				.viewType         = vk::ImageViewType::e2D,
+				.format           = draw_image.format,
+				.subresourceRange = {
+					.aspectMask     = vk::ImageAspectFlagBits::eColor,
+					.baseMipLevel   = 0,
+					.levelCount     = 1,
+					.baseArrayLayer = 0,
+					.layerCount     = 1,
+				},
+			};
+
+			draw_image.view = device.createImageView(view_ci);
+		}
+
+		void free_image_memory()
+		{
+			device.destroyImageView(draw_image.view);
+			vmaDestroyImage(vma_allocator, draw_image.image, draw_image.allocation);
+		}
+
 	private:
 		vk::Instance instance;
 		vk::DebugUtilsMessengerEXT debug_messenger;
@@ -114,5 +265,12 @@ export namespace vfw
 		std::uint32_t graphics_queue_family;
 
 		VmaAllocator vma_allocator;
+
+		vk::SwapchainKHR swapchain;
+		vk::Extent2D swapchain_extent;
+		std::vector<vk::Image> swapchain_images;
+		std::vector<vk::ImageView> swapchain_imageviews;
+
+		types::allocated_image draw_image;
 	};
 }

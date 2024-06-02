@@ -42,6 +42,7 @@ target_sources(${PRJ_LIB_NAME}
 	PUBLIC FILE_SET vfw_modules TYPE CXX_MODULES FILES
 		vulkan-framework.ixx
 		engine.ixx
+		vulkan-types.ixx
 )
 
 # libraries used by vke

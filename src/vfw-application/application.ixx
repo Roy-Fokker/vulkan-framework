@@ -74,6 +74,8 @@ export namespace app_base
 			std::println("⌚: {:>5.2f}s, ⏱️: {}ns, Width: {:>5}, Height: {:>5}",
 			             tt, dt, width, height);
 
+			engine->window_resized(width, height);
+
 			return true;
 		}
 
