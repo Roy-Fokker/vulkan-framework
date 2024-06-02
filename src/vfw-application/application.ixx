@@ -1,5 +1,7 @@
 module;
 
+#include <windows.h>
+
 export module application;
 
 import std;
@@ -12,18 +14,35 @@ import vfw;
 
 export namespace app_base
 {
-	struct push_constant
+	auto read_file(const std::filesystem::path &filename) -> std::vector<uint32_t>
 	{
-		alignas(16) glm::vec2 pos;
-	};
+		auto file = std::ifstream(filename, std::ios::ate | std::ios::binary);
+
+		if (not file.is_open())
+		{
+			throw std::runtime_error("failed to open file!");
+		}
+
+		auto file_size = file.tellg();
+		auto buffer    = std::vector<uint32_t>(file_size);
+
+		file.seekg(0);
+		file.read(reinterpret_cast<char *>(buffer.data()), file_size);
+
+		file.close();
+
+		return buffer;
+	}
 
 	class application
 	{
 	public:
-		application() = delete;
-		explicit application(std::uint32_t &rndr)
+		application()  = delete;
+		~application() = default;
+
+		application(HWND hWnd)
 		{
-			setup_renderer(rndr);
+			setup_engine(hWnd);
 		}
 
 		void update(const std_clock::timer &clk, const win32::input &inpt)
@@ -35,21 +54,19 @@ export namespace app_base
 
 			if (inpt.is_button_down(escape))
 			{
-				close = true;
+				stop_app = true;
 				std::println("⌚: {:>5.2f}s, ⏱️: {}ns, ⌨️: {:10.10}",
 				             tt, dt, win32::to_string(escape));
 			}
-
-			constant.pos.x += static_cast<float>(dt);
-			if (constant.pos.x > 1.5f)
-			{
-				constant.pos.x = -1.5f;
-			}
 		}
 
-		[[nodiscard]] auto should_continue() const -> bool
+		void render()
 		{
-			return not close;
+		}
+
+		[[nodiscard]] auto should_exit() const -> bool
+		{
+			return stop_app;
 		}
 
 		auto on_resize(std::uint32_t width, std::uint32_t height) -> bool
@@ -71,56 +88,34 @@ export namespace app_base
 		}
 
 	private:
-		auto read_file(const std::filesystem::path &filename) -> std::vector<uint32_t>
+		void setup_engine(HWND hWnd)
 		{
-			auto file = std::ifstream(filename, std::ios::ate | std::ios::binary);
+			engine = std::make_unique<vfw::engine>(hWnd);
 
-			if (not file.is_open())
-			{
-				throw std::runtime_error("failed to open file!");
-			}
-
-			auto file_size = file.tellg();
-			auto buffer    = std::vector<uint32_t>(file_size);
-
-			file.seekg(0);
-			file.read(reinterpret_cast<char *>(buffer.data()), file_size);
-
-			file.close();
-
-			return buffer;
+			setup_pipeline();
+			setup_model();
+			add_draw_cmds();
 		}
 
-		void setup_renderer(std::uint32_t &rndr)
-		{
-			setup_pipeline(rndr);
-			setup_model(rndr);
-			add_draw_cmds(rndr);
-		}
-
-		void setup_pipeline(std::uint32_t &rndr)
+		void setup_pipeline()
 		{
 			auto vert_shader_bin = read_file("shaders/basic_pc_shader.vert.spv");
 			auto frag_shader_bin = read_file("shaders/basic_pc_shader.frag.spv");
 		}
 
-		void setup_model(std::uint32_t &rndr)
+		void setup_model()
 		{
 		}
 
-		void add_draw_cmds(std::uint32_t &rndr)
+		void add_draw_cmds()
 		{
 		}
 
 	private:
-		bool close = false;
-		double dt  = 0.f;
-		double tt  = 0.f;
+		bool stop_app = false;
+		double dt     = 0.f;
+		double tt     = 0.f;
 
-		uint32_t model_idx{};
-
-		push_constant constant = {
-			.pos = { -1.5f, 0.0f },
-		};
+		std::unique_ptr<vfw::engine> engine{};
 	};
 }
