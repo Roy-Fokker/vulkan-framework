@@ -1,6 +1,8 @@
 # find vcpkg installed library
 find_package(fmt CONFIG REQUIRED)
 find_package(Vulkan REQUIRED)
+find_package(VulkanMemoryAllocator CONFIG REQUIRED)
+find_package(vk-bootstrap CONFIG REQUIRED)
 find_package(glm CONFIG REQUIRED)
 
 # set library name variable
@@ -19,6 +21,7 @@ target_compile_definitions(${PRJ_LIB_NAME}
 		_CRT_SECURE_NO_WARNINGS     # Don't want MSVC's CRT warnings
 		NOMINMAX                    # Don't want Window.h to define min and max macros
 		WIN32_LEAN_AND_MEAN         # Windows.h should only include the basics
+		VMA_IMPLEMENTATION          # Tell Vulkan Memory Allocator that we are using it.
 		VULKAN_HPP_NO_CONSTRUCTORS  # Vulkan.hpp should not define constructors for structs
 		VK_USE_PLATFORM_WIN32_KHR   # On Windows, Vulkan needs this.
 		GLM_FORCE_DEPTH_ZERO_TO_ONE # GLM clip space should be in Z-axis to 0 to 1
@@ -37,13 +40,17 @@ target_sources(${PRJ_LIB_NAME}
 	# magic encantations for C++ Modules Support in CMake
 	PUBLIC FILE_SET vfw_modules TYPE CXX_MODULES FILES
 		vulkan-framework.ixx
+		engine.ixx
 )
 
 # libraries used by vke
 target_link_libraries(${PRJ_LIB_NAME}
 	PRIVATE
-		std23modules   # precompiled mdoules for C++ 23 Standard Libary
-		Vulkan::Vulkan # Vulkan SDK
-		glm::glm       # glm library
-		fmt::fmt       # fmt library
+		std23modules                                 # precompiled mdoules for C++ 23 Standard Libary
+		Vulkan::Vulkan                               # Vulkan SDK
+		GPUOpen::VulkanMemoryAllocator               # Vulkan Memory Allocator
+		vk-bootstrap::vk-bootstrap                   # vk-bootstrap
+		vk-bootstrap::vk-bootstrap-compiler-warnings # vk-bootstrap with compiler warning??
+		glm::glm                                     # glm library
+		fmt::fmt                                     # fmt library
 )

@@ -7,13 +7,15 @@ based on C++23 Project Template
 - cmake with cmakepresets for build generator
 - clang-format and clang-tidy, for basic formatting and static analysis
 - C++ Modules, where possible
+- C++ Standard Library Module
 
 ## to be figured out
-- enabling standard module
 - currently it's win32 only
 
 ## project dependencies installed via vcpkg
 - vulkan
+- vk-bootstrap
+- Vulkan Memory Allocator
 - glm
 - fmt
 
@@ -43,3 +45,7 @@ based on C++23 Project Template
 	}
   ```
 - MS CMake-Tools has new mechanism to do above. Documentation is bit obtuse, so need to parse it.
+
+# Reference Links
+- https://vk-guide.com
+- https://medium.com/traverse-research/bindless-rendering-setup-afeb678d77fc

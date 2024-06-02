@@ -26,6 +26,12 @@ target_compile_definitions(${PRJ_EXE_NAME}
 		GLM_FORCE_RADIANS           # GLM should always use radians not degrees.
 )
 
+# precompile headers for this library
+target_precompile_headers(${PRJ_EXE_NAME} 
+	PUBLIC
+		pch.hpp
+)
+
 # source files for this application
 target_sources(${PRJ_EXE_NAME}
 	PRIVATE
@@ -48,10 +54,4 @@ target_link_libraries(${PRJ_EXE_NAME}
 		Vulkan::Vulkan    # Vulkan SDK
 		glm::glm          # glm library
 		fmt::fmt          # fmt library
-)
-
-# precompiled headers 
-target_precompile_headers(${PRJ_EXE_NAME}
-	REUSE_FROM
-		vulkan-framework  # reuse the PCH file from this project
 )

@@ -1,10 +1,9 @@
 {
-	"$schema": "https://raw.githubusercontent.com/microsoft/vcpkg-tool/main/docs/vcpkg.schema.json",
-	"name": "vulkan-framework",
-	"version": "0.0.1",
 	"dependencies": [
 		"fmt",
 		"vulkan",
+		"vk-bootstrap",
+		"vulkan-memory-allocator",
 		"glm"
 	]
 }
