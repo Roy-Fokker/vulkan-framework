@@ -21,7 +21,6 @@ target_compile_definitions(${PRJ_LIB_NAME}
 		_CRT_SECURE_NO_WARNINGS     # Don't want MSVC's CRT warnings
 		NOMINMAX                    # Don't want Window.h to define min and max macros
 		WIN32_LEAN_AND_MEAN         # Windows.h should only include the basics
-		VMA_IMPLEMENTATION          # Tell Vulkan Memory Allocator that we are using it.
 		VULKAN_HPP_NO_CONSTRUCTORS  # Vulkan.hpp should not define constructors for structs
 		VK_USE_PLATFORM_WIN32_KHR   # On Windows, Vulkan needs this.
 		GLM_FORCE_DEPTH_ZERO_TO_ONE # GLM clip space should be in Z-axis to 0 to 1
@@ -37,6 +36,8 @@ target_precompile_headers(${PRJ_LIB_NAME}
 
 # source files for this app
 target_sources(${PRJ_LIB_NAME}
+	PRIVATE
+		vma-usage.hpp
 	# magic encantations for C++ Modules Support in CMake
 	PUBLIC FILE_SET vfw_modules TYPE CXX_MODULES FILES
 		vulkan-framework.ixx

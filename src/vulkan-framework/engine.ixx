@@ -3,7 +3,6 @@ module;
 #include <Windows.h>
 #include <VkBootstrap.h>
 
-// Vulkan Memory Allocator
 #include <vma/vk_mem_alloc.h>
 
 export module vfw:engine;
