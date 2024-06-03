@@ -41,7 +41,7 @@ target_sources(${PRJ_LIB_NAME}
 	# magic encantations for C++ Modules Support in CMake
 	PUBLIC FILE_SET vfw_modules TYPE CXX_MODULES FILES
 		vulkan-framework.ixx
-		engine.ixx
+		context.ixx
 		vulkan-types.ixx
 )
 

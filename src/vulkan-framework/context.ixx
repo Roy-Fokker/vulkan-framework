@@ -5,7 +5,7 @@ module;
 
 #include <vma/vk_mem_alloc.h>
 
-export module vfw:engine;
+export module vfw:context;
 
 import std;
 
@@ -21,10 +21,10 @@ export namespace vfw
 #endif
 	};
 
-	class engine final
+	class context final
 	{
 	public:
-		engine(HWND hWnd)
+		context(HWND hWnd)
 		{
 			auto vkb_inst = create_instance();
 			create_surface(hWnd);
@@ -35,7 +35,7 @@ export namespace vfw
 			create_swapchain(width, height);
 		}
 
-		~engine()
+		~context()
 		{
 			destroy_swapchain();
 
