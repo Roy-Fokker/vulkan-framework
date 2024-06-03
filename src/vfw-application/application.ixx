@@ -12,6 +12,8 @@ import clock;
 
 import vfw;
 
+using namespace std::string_view_literals;
+
 export namespace app_base
 {
 	auto read_file(const std::filesystem::path &filename) -> std::vector<uint32_t>
@@ -36,23 +38,101 @@ export namespace app_base
 
 	class application
 	{
+	private:
+		std::array<uint16_t, 2> window_size = { 800, 600 };
+		std::wstring_view window_title      = L"Vulkan Framework Application"sv;
+		bool stop_app                       = false;
+		double dt                           = 0.f;
+		double tt                           = 0.f;
+
 	public:
-		application()  = delete;
 		~application() = default;
 
-		application(HWND hWnd)
+		application()
 		{
-			setup_engine(hWnd);
+			setup_window_and_input();
+
+			setup_engine();
 		}
 
-		void update(const std_clock::timer &clk, const win32::input &inpt)
+		auto run() -> bool
 		{
-			dt = clk.get_delta<std_clock::s>();
-			tt = clk.get_total<std_clock::s>();
+			clock.reset();
+			window.show();
+
+			while (window.handle() and not stop_app)
+			{
+				window.process_messages();
+				input.process_messages();
+				clock.tick();
+
+				update();
+				render();
+			}
+
+			return EXIT_SUCCESS;
+		}
+
+	private:
+		void setup_window_and_input()
+		{
+			using namespace win32;
+
+			window = win32::window({ .width  = window_size[0],
+			                         .height = window_size[1],
+			                         .title  = window_title });
+
+			input = win32::input(window.handle(),
+			                     { win32::input_device::keyboard, win32::input_device::mouse });
+
+			clock = std_clock::timer();
+
+			// Callbacks provided by window class.
+			window.set_callback([&]([[maybe_unused]] input_button button,
+			                        [[maybe_unused]] std::uint16_t scan_code,
+			                        [[maybe_unused]] bool isKeyDown,
+			                        [[maybe_unused]] std::uint16_t repeat_count) {
+				return false;
+			});
+			window.set_callback([&](std::uint32_t width, std::uint32_t height) {
+				return on_resize(width, height);
+			});
+			window.set_callback([&](window::active_state is_active, bool minimized) {
+				return on_activate(is_active, minimized);
+			});
+		}
+
+		void setup_engine()
+		{
+			engine = std::make_unique<vfw::engine>(window.handle());
+
+			setup_pipeline();
+			setup_model();
+			add_draw_cmds();
+		}
+
+		void setup_pipeline()
+		{
+			auto vert_shader_bin = read_file("shaders/basic_pc_shader.vert.spv");
+			auto frag_shader_bin = read_file("shaders/basic_pc_shader.frag.spv");
+		}
+
+		void setup_model()
+		{
+		}
+
+		void add_draw_cmds()
+		{
+		}
+
+		void update()
+		{
+			dt = clock.get_delta<std_clock::s>();
+			tt = clock.get_total<std_clock::s>();
 
 			using enum win32::input_button;
 
-			if (inpt.is_button_down(escape))
+			if (input.is_button_down(escape))
 			{
 				stop_app = true;
 				std::println("⌚: {:>5.2f}s, ⏱️: {}ns, ⌨️: {:10.10}",
@@ -62,11 +142,6 @@ export namespace app_base
 
 		void render()
 		{
-		}
-
-		[[nodiscard]] auto should_exit() const -> bool
-		{
-			return stop_app;
 		}
 
 		auto on_resize(std::uint32_t width, std::uint32_t height) -> bool
@@ -90,33 +165,9 @@ export namespace app_base
 		}
 
 	private:
-		void setup_engine(HWND hWnd)
-		{
-			engine = std::make_unique<vfw::engine>(hWnd);
-
-			setup_pipeline();
-			setup_model();
-			add_draw_cmds();
-		}
-
-		void setup_pipeline()
-		{
-			auto vert_shader_bin = read_file("shaders/basic_pc_shader.vert.spv");
-			auto frag_shader_bin = read_file("shaders/basic_pc_shader.frag.spv");
-		}
-
-		void setup_model()
-		{
-		}
-
-		void add_draw_cmds()
-		{
-		}
-
-	private:
-		bool stop_app = false;
-		double dt     = 0.f;
-		double tt     = 0.f;
+		win32::window window{};
+		win32::input input{};
+		std_clock::timer clock{};
 
 		std::unique_ptr<vfw::engine> engine{};
 	};

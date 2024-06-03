@@ -443,14 +443,14 @@ export namespace win32
 	class input final
 	{
 	public:
-		input()                            = delete;
+		input()                            = default;
 		input(const input &src)            = delete;
 		input &operator=(const input &src) = delete;
 		input(input &&src)                 = delete;
-		input &operator=(input &&src)      = delete;
+		input &operator=(input &&src)      = default;
+		~input()                           = default;
 
 		input(HWND hWnd, const std::vector<input_device> &devices);
-		~input() = default;
 
 		void process_messages();
 

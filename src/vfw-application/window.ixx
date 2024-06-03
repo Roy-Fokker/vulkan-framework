@@ -41,11 +41,11 @@ export namespace win32
 			std::uint16_t icon = NULL;
 		};
 
-		window()                             = delete;
+		window()                             = default;
 		window(const window &src)            = delete;
 		window &operator=(const window &src) = delete;
 		window(window &&src)                 = delete;
-		window &operator=(window &&src)      = delete;
+		window &operator=(window &&src)      = default;
 		~window()                            = default;
 
 		window(const description &desc)
