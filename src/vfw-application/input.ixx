@@ -740,6 +740,8 @@ void input::process_keyboard_input(const RAWKEYBOARD &data)
 		buttons_down[static_cast<std::uint16_t>(input_button::alt)] = kState;
 		break;
 	}
+
+	// std::println("⌨️: {:10.10}, is_down: {}", win32::to_string(button), kState);
 }
 
 void input::process_mouse_input(const RAWMOUSE &data)
@@ -794,4 +796,6 @@ void input::process_mouse_input(const RAWMOUSE &data)
 		axis_values_relative[static_cast<std::int8_t>(input_axis::ry)] += rWheel;
 		axis_values_absolute[static_cast<std::int8_t>(input_axis::ry)] += rWheel;
 	}
+
+	// std::println("🖱️: {:10.10}, is_down: {}, x: {}, y:{}, rx: {}", win32::to_string(button), btnState, xPos, yPos, rWheel);
 }

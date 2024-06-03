@@ -120,10 +120,21 @@ export namespace win32
 			}
 		}
 
+		void change_size(uint32_t width, uint32_t height)
+		{
+			window_impl->ResizeClient(width, height);
+			window_impl->CenterWindow();
+		}
+
 		void show()
 		{
 			window_impl->ShowWindow(SW_SHOWNORMAL);
 			window_impl->SetFocus();
+		}
+
+		void hide()
+		{
+			window_impl->ShowWindow(SW_HIDE);
 		}
 
 		void process_messages()
@@ -274,17 +285,16 @@ export namespace win32
 
 			void ResizeClient(std::uint32_t width, std::uint32_t height) const
 			{
-				RECT window_rectangle{};
+				auto x = 0u, y = 0u;
+				std::println("x: {}, y: {}, w:{}, h:{}", x, y, width, height);
 
-				GetWindowRect(m_hWnd, &window_rectangle);
+				auto rect = RECT{};
+				AdjustWindowRectEx(&rect, GetWindowLong(m_hWnd, GWL_STYLE), FALSE, GetWindowLong(m_hWnd, GWL_EXSTYLE));
 
-				auto [x, y, w, h] = window_rectangle;
-				w                 = width;
-				h                 = height;
-				x                 = (GetSystemMetrics(SM_CXSCREEN) - w) / 2;
-				y                 = (GetSystemMetrics(SM_CYSCREEN) - h) / 2;
+				width += (rect.right - rect.left);
+				height += (rect.bottom - rect.top);
 
-				MoveWindow(m_hWnd, x, y, w, h, FALSE);
+				MoveWindow(m_hWnd, x, y, width, height, FALSE);
 			}
 
 			void ShowWindow(int cmdShow) const
