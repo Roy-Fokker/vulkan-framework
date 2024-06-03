@@ -94,7 +94,7 @@ export namespace app_base
 			                        [[maybe_unused]] std::uint16_t repeat_count) {
 				return false;
 			});
-			window.set_callback([&](std::uint32_t width, std::uint32_t height) {
+			window.set_callback([&](std::uint16_t width, std::uint16_t height) {
 				return on_resize(width, height);
 			});
 			window.set_callback([&](window::active_state is_active, bool minimized) {
@@ -144,11 +144,12 @@ export namespace app_base
 		{
 		}
 
-		auto on_resize(std::uint32_t width, std::uint32_t height) -> bool
+		auto on_resize(std::uint16_t width, std::uint16_t height) -> bool
 		{
 			std::println("⌚: {:>5.2f}s, ⏱️: {}ns, Width: {:>5}, Height: {:>5}",
 			             tt, dt, width, height);
 
+			window_size = { width, height };
 			engine->window_resized(width, height);
 
 			return true;

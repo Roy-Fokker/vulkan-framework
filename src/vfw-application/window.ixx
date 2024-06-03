@@ -29,7 +29,7 @@ export namespace win32
 		};
 
 		using keypress_callback = std::function<bool(input_button button, std::uint16_t scan_code, bool isKeyDown, std::uint16_t repeat_count)>;
-		using resize_callback   = std::function<bool(std::uint32_t width, std::uint32_t height)>;
+		using resize_callback   = std::function<bool(std::uint16_t width, std::uint16_t height)>;
 		using activate_callback = std::function<bool(active_state is_active, bool minimized)>;
 
 		struct description
