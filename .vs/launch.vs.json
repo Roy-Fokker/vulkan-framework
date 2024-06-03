@@ -1,0 +1,13 @@
+{
+  "version": "0.2.1",
+  "defaults": {},
+  "configurations": [
+    {
+      "type": "default",
+      "project": "CMakeLists.txt",
+      "projectTarget": "vfw-application.exe (E:\\Projects\\CPP\\vulkan-framework\\bin\\Debug\\vfw-application.exe)",
+      "name": "vfw-application",
+      "currentDir": "${workspaceRoot}/bin"
+    }
+  ]
+}
