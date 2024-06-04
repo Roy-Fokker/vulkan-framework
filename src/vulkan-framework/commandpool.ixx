@@ -1,9 +1,5 @@
 module;
 
-#include <VkBootstrap.h>
-
-#include <vma/vk_mem_alloc.h>
-
 export module vfw:commandpool;
 
 import std;
