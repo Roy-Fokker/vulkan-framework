@@ -9,6 +9,7 @@ import std;
 import :context;
 import :swapchain;
 import :commandpool;
+import :types;
 
 export namespace vfw
 {
@@ -39,9 +40,14 @@ export namespace vfw
 					.graphics_queue       = ctx->get_graphics_queue(),
 					.graphics_queue_index = ctx->get_graphics_queue_family(),
 				});
+
+			create_sync_objects();
 		}
 
-		~renderer() = default;
+		~renderer()
+		{
+			destroy_sync_objects();
+		}
 
 		void window_resized(uint16_t width, uint16_t height)
 		{
@@ -58,6 +64,8 @@ export namespace vfw
 					.chosen_gpu = ctx->get_chosen_gpu(),
 				});
 
+			// TODO: would frame count changed because of window resize??
+			// should never happen.
 			if (max_frame_count not_eq sc->get_image_count())
 			{
 				max_frame_count = sc->get_image_count();
@@ -84,10 +92,45 @@ export namespace vfw
 			};
 		}
 
+		void create_sync_objects()
+		{
+			auto device = ctx->get_device();
+			sync_objects.resize(max_frame_count);
+
+			for (auto &&sync_object : sync_objects)
+			{
+				auto semaphore_ci               = vk::SemaphoreCreateInfo{};
+				sync_object.swapchain_semaphore = device.createSemaphore(semaphore_ci);
+				sync_object.render_semaphore    = device.createSemaphore(semaphore_ci);
+
+				auto fence_ci = vk::FenceCreateInfo{
+					.flags = vk::FenceCreateFlagBits::eSignaled
+				};
+
+				sync_object.render_fence = device.createFence(fence_ci);
+			}
+		}
+
+		void destroy_sync_objects()
+		{
+			auto device = ctx->get_device();
+
+			device.waitIdle();
+
+			for (auto &&sync_object : sync_objects)
+			{
+				device.destroyFence(sync_object.render_fence);
+				device.destroySemaphore(sync_object.render_semaphore);
+				device.destroySemaphore(sync_object.swapchain_semaphore);
+			}
+		}
+
 	private:
 		std::unique_ptr<context> ctx{ nullptr };
 		std::unique_ptr<swapchain> sc{ nullptr };
 		std::unique_ptr<commandpool> cp{ nullptr };
+
+		std::vector<types::frame_sync> sync_objects{};
 
 		uint16_t max_frame_count = 0;
 	};
