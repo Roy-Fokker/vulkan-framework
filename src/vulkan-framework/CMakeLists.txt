@@ -44,6 +44,7 @@ target_sources(${PRJ_LIB_NAME}
 		vulkan-framework.ixx
 		context.ixx
 		swapchain.ixx
+		commandpool.ixx
 )
 
 # libraries used by vke

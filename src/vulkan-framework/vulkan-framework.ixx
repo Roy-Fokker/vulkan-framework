@@ -8,6 +8,7 @@ import std;
 
 import :context;
 import :swapchain;
+import :commandpool;
 
 export namespace vfw
 {
@@ -28,6 +29,16 @@ export namespace vfw
 					 .surface    = ctx->get_surface(),
 					 .chosen_gpu = ctx->get_chosen_gpu(),
                 });
+
+			max_frame_count = sc->get_image_count();
+
+			cp = std::make_unique<commandpool>(
+				ctx->get_device(),
+				commandpool::description{
+					.max_frame_count      = max_frame_count,
+					.graphics_queue       = ctx->get_graphics_queue(),
+					.graphics_queue_index = ctx->get_graphics_queue_family(),
+				});
 		}
 
 		~renderer() = default;
@@ -46,6 +57,19 @@ export namespace vfw
 					.surface    = ctx->get_surface(),
 					.chosen_gpu = ctx->get_chosen_gpu(),
 				});
+
+			if (max_frame_count not_eq sc->get_image_count())
+			{
+				max_frame_count = sc->get_image_count();
+				cp.reset(nullptr);
+				cp = std::make_unique<commandpool>(
+					ctx->get_device(),
+					commandpool::description{
+						.max_frame_count      = max_frame_count,
+						.graphics_queue       = ctx->get_graphics_queue(),
+						.graphics_queue_index = ctx->get_graphics_queue_family(),
+					});
+			}
 		}
 
 	private:
@@ -63,5 +87,8 @@ export namespace vfw
 	private:
 		std::unique_ptr<context> ctx{ nullptr };
 		std::unique_ptr<swapchain> sc{ nullptr };
+		std::unique_ptr<commandpool> cp{ nullptr };
+
+		uint16_t max_frame_count = 0;
 	};
 }

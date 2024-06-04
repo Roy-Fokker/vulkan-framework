@@ -1,5 +1,7 @@
 module;
 
+#include <cassert>
+
 #include <VkBootstrap.h>
 
 #include <vma/vk_mem_alloc.h>
@@ -30,7 +32,7 @@ export namespace vfw
 		swapchain(swapchain &&src)                 = delete;
 		swapchain &operator=(swapchain &&src)      = delete;
 
-		swapchain(vk::Device device, VmaAllocator allocator, description desc)
+		swapchain(vk::Device device, VmaAllocator allocator, const description &desc)
 			: device(device), allocator(allocator)
 		{
 			create_swapchain(desc);
@@ -42,8 +44,14 @@ export namespace vfw
 			destroy_swapchain();
 		}
 
+		[[nodiscard]] auto get_image_count() -> uint16_t
+		{
+			assert(swapchain_imageviews.size() < UINT16_MAX);
+			return static_cast<uint16_t>(swapchain_imageviews.size());
+		}
+
 	private:
-		void create_swapchain(description desc)
+		void create_swapchain(const description &desc)
 		{
 			auto sc_builder = vkb::SwapchainBuilder{ desc.chosen_gpu, device, desc.surface };
 			auto vkb_sc     = sc_builder
