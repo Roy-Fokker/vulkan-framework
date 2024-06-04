@@ -13,7 +13,7 @@ export namespace vfw
 	public:
 		struct description
 		{
-			uint16_t max_frame_count;
+			uint32_t max_frame_count;
 			vk::Queue graphics_queue;
 			uint32_t graphics_queue_index;
 		};
@@ -38,6 +38,11 @@ export namespace vfw
 
 			destroy_command_buffers();
 			destroy_command_pool();
+		}
+
+		[[nodiscard]] auto get_buffer_at(uint32_t index) -> vk::CommandBuffer
+		{
+			return command_buffers.at(index);
 		}
 
 	private:
