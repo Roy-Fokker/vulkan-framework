@@ -23,12 +23,6 @@ export namespace vfw
 
 	class context final
 	{
-		// struct sc_description
-		// {
-		// 	uint16_t width;
-		// 	uint16_t height;
-		// };
-
 	public:
 		context()                              = delete;
 		context(const context &src)            = delete;
@@ -78,6 +72,16 @@ export namespace vfw
 		[[nodiscard]] auto get_chosen_gpu() -> vk::PhysicalDevice
 		{
 			return chosen_gpu;
+		}
+
+		[[nodiscard]] auto get_graphics_queue() -> vk::Queue
+		{
+			return graphics_queue;
+		}
+
+		[[nodiscard]] auto get_graphics_queue_family() -> std::uint32_t
+		{
+			return graphics_queue_family;
 		}
 
 	private:
