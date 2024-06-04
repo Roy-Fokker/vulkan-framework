@@ -40,9 +40,10 @@ target_sources(${PRJ_LIB_NAME}
 		vma-usage.hpp
 	# magic encantations for C++ Modules Support in CMake
 	PUBLIC FILE_SET vfw_modules TYPE CXX_MODULES FILES
+		vulkan-types.ixx
 		vulkan-framework.ixx
 		context.ixx
-		vulkan-types.ixx
+		swapchain.ixx
 )
 
 # libraries used by vke
