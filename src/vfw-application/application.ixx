@@ -104,7 +104,7 @@ export namespace app_base
 
 		void setup_engine()
 		{
-			context = std::make_unique<vfw::context>(window.handle());
+			renderer = std::make_unique<vfw::renderer>(window.handle());
 
 			setup_pipeline();
 			setup_model();
@@ -150,7 +150,11 @@ export namespace app_base
 			             tt, dt, width, height);
 
 			window_size = { width, height };
-			context->window_resized(width, height);
+
+			if (renderer)
+			{
+				renderer->window_resized(width, height);
+			}
 
 			return true;
 		}
@@ -170,6 +174,6 @@ export namespace app_base
 		win32::input input{};
 		std_clock::timer clock{};
 
-		std::unique_ptr<vfw::context> context{};
+		std::unique_ptr<vfw::renderer> renderer{};
 	};
 }
