@@ -1,5 +1,6 @@
 module;
 
+#include <cassert>
 #include "vma-usage.hpp"
 
 export module vfw;
@@ -22,25 +23,22 @@ export namespace vfw
 			auto [width, height] = get_window_size(hWnd);
 
 			ctx = std::make_unique<context>(hWnd);
-			sc  = std::make_unique<swapchain>(
-                ctx->get_device(),
-                ctx->get_mem_allocator(),
-                swapchain::description{
-					 .width      = width,
-					 .height     = height,
-					 .surface    = ctx->get_surface(),
-					 .chosen_gpu = ctx->get_chosen_gpu(),
-                });
+			sc  = std::make_unique<swapchain>(ctx->get_device(), ctx->get_mem_allocator(),
+			                                  swapchain::description{
+												  .width      = width,
+												  .height     = height,
+												  .surface    = ctx->get_surface(),
+												  .chosen_gpu = ctx->get_chosen_gpu(),
+                                             });
 
 			max_frame_count = sc->get_image_count();
 
-			cp = std::make_unique<commandpool>(
-				ctx->get_device(),
-				commandpool::description{
-					.max_frame_count      = max_frame_count,
-					.graphics_queue       = ctx->get_graphics_queue(),
-					.graphics_queue_index = ctx->get_graphics_queue_family(),
-				});
+			cp = std::make_unique<commandpool>(ctx->get_device(),
+			                                   commandpool::description{
+												   .max_frame_count      = max_frame_count,
+												   .graphics_queue       = ctx->get_graphics_queue(),
+												   .graphics_queue_index = ctx->get_graphics_queue_family(),
+											   });
 
 			fs = std::make_unique<frame_sync>(ctx->get_device(), max_frame_count);
 		}
@@ -78,6 +76,30 @@ export namespace vfw
 			}
 		}
 
+		void draw()
+		{
+			const auto wait_time = 1'000'000'000u;
+			auto device          = ctx->get_device();
+			auto [swapchain_semaphore, render_semaphore, render_fence] =
+				fs->get_sync_objects_at(current_frame);
+			auto cb = cp->get_buffer_at(current_frame);
+
+			auto result = device.waitForFences(render_fence, true, wait_time);
+			assert(result == vk::Result::eSuccess);
+			device.resetFences(render_fence);
+
+			auto image_index = sc->next_image_index(swapchain_semaphore);
+			assert(image_index <= max_frame_count);
+
+			record_command_buffer(cb, image_index);
+
+			submit_command_buffer(cb, swapchain_semaphore, render_semaphore, render_fence);
+
+			ctx->present(sc->get_swapchain(), image_index, render_semaphore);
+
+			current_frame = (current_frame + 1) % max_frame_count; // 0...max_frame_count
+		}
+
 	private:
 		auto get_window_size(HWND window_handle) -> const std::array<uint16_t, 2>
 		{
@@ -90,37 +112,59 @@ export namespace vfw
 			};
 		}
 
-		void create_sync_objects()
+		void record_command_buffer(vk::CommandBuffer &cb, uint32_t image_index)
 		{
-			auto device = ctx->get_device();
-			sync_objects.resize(max_frame_count);
+			cb.reset();
+			auto cb_bi  = vk::CommandBufferBeginInfo{};
+			auto result = cb.begin(&cb_bi);
+			assert(result == vk::Result::eSuccess);
 
-			for (auto &&sync_object : sync_objects)
-			{
-				auto semaphore_ci               = vk::SemaphoreCreateInfo{};
-				sync_object.swapchain_semaphore = device.createSemaphore(semaphore_ci);
-				sync_object.render_semaphore    = device.createSemaphore(semaphore_ci);
+			sc->transition_image(cb, image_index, vk::ImageLayout::eUndefined, vk::ImageLayout::eGeneral);
 
-				auto fence_ci = vk::FenceCreateInfo{
-					.flags = vk::FenceCreateFlagBits::eSignaled
-				};
+			auto clear_color = std::array{ 0.4f, 0.5f, 0.4f, 1.0f };
+			auto clear_value = vk::ClearValue{
+				.color = clear_color,
+			};
 
-				sync_object.render_fence = device.createFence(fence_ci);
-			}
+			sc->clear_image(cb, image_index, vk::ImageLayout::eGeneral, clear_value, vk::ImageAspectFlagBits::eColor);
+
+			sc->transition_image(cb, image_index, vk::ImageLayout::eGeneral, vk::ImageLayout::ePresentSrcKHR);
+
+			cb.end();
 		}
 
-		void destroy_sync_objects()
+		void submit_command_buffer(vk::CommandBuffer &cb, vk::Semaphore &swapchain_semaphore, vk::Semaphore &render_semaphore, vk::Fence render_fence)
 		{
-			auto device = ctx->get_device();
+			auto wait_info = vk::SemaphoreSubmitInfo{
+				.semaphore   = swapchain_semaphore,
+				.value       = 1,
+				.stageMask   = vk::PipelineStageFlagBits2::eColorAttachmentOutput,
+				.deviceIndex = 0,
+			};
 
-			device.waitIdle();
+			auto signal_info = vk::SemaphoreSubmitInfo{
+				.semaphore   = render_semaphore,
+				.value       = 1,
+				.stageMask   = vk::PipelineStageFlagBits2::eAllGraphics,
+				.deviceIndex = 0,
+			};
 
-			for (auto &&sync_object : sync_objects)
-			{
-				device.destroyFence(sync_object.render_fence);
-				device.destroySemaphore(sync_object.render_semaphore);
-				device.destroySemaphore(sync_object.swapchain_semaphore);
-			}
+			auto cb_submit_info = vk::CommandBufferSubmitInfo{
+				.commandBuffer = cb,
+				.deviceMask    = 0,
+			};
+
+			auto submit_info = vk::SubmitInfo2{
+				.waitSemaphoreInfoCount   = 1,
+				.pWaitSemaphoreInfos      = &wait_info,
+				.commandBufferInfoCount   = 1,
+				.pCommandBufferInfos      = &cb_submit_info,
+				.signalSemaphoreInfoCount = 1,
+				.pSignalSemaphoreInfos    = &signal_info,
+			};
+
+			auto graphics_queue = ctx->get_graphics_queue();
+			graphics_queue.submit2(submit_info, render_fence);
 		}
 
 	private:
@@ -129,8 +173,7 @@ export namespace vfw
 		std::unique_ptr<commandpool> cp{ nullptr };
 		std::unique_ptr<frame_sync> fs{ nullptr };
 
-		std::vector<types::frame_sync> sync_objects{};
-
-		uint16_t max_frame_count = 0;
+		uint32_t max_frame_count = 0;
+		uint32_t current_frame   = 0;
 	};
 }

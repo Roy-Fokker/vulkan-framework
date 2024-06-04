@@ -84,6 +84,20 @@ export namespace vfw
 			return graphics_queue_family;
 		}
 
+		void present(const vk::SwapchainKHR &swapchainKHR, uint32_t image_index, const vk::Semaphore &render_finished_semaphore)
+		{
+			auto present_info = vk::PresentInfoKHR{
+				.waitSemaphoreCount = 1,
+				.pWaitSemaphores    = &render_finished_semaphore,
+				.swapchainCount     = 1,
+				.pSwapchains        = &swapchainKHR,
+				.pImageIndices      = &image_index,
+			};
+
+			auto result = graphics_queue.presentKHR(present_info);
+			assert(result == vk::Result::eSuccess);
+		}
+
 	private:
 		auto create_instance() -> vkb::Instance
 		{

@@ -44,10 +44,81 @@ export namespace vfw
 			destroy_swapchain();
 		}
 
-		[[nodiscard]] auto get_image_count() -> uint16_t
+		[[nodiscard]] auto get_image_count() -> uint32_t
 		{
 			assert(swapchain_imageviews.size() < UINT16_MAX);
-			return static_cast<uint16_t>(swapchain_imageviews.size());
+			return static_cast<uint32_t>(swapchain_imageviews.size());
+		}
+
+		[[nodiscard]] auto next_image_index(vk::Semaphore image_semaphore) -> uint32_t
+		{
+			const auto wait_time       = 1'000'000'000u;
+			auto [result, image_index] = device.acquireNextImageKHR(swapchainKHR,
+			                                                        wait_time,
+			                                                        image_semaphore,
+			                                                        VK_NULL_HANDLE);
+
+			return image_index;
+		}
+
+		[[nodisard]] auto get_swapchain() -> vk::SwapchainKHR
+		{
+			return swapchainKHR;
+		}
+
+		void transition_image(vk::CommandBuffer &cb, uint32_t image_index, vk::ImageLayout current_layout, vk::ImageLayout new_layout)
+		{
+			auto aspect_mask = vk::ImageAspectFlags{};
+			if (new_layout == vk::ImageLayout::eDepthAttachmentOptimal)
+			{
+				aspect_mask = vk::ImageAspectFlagBits::eDepth;
+			}
+			else
+			{
+				aspect_mask = vk::ImageAspectFlagBits::eColor;
+			}
+
+			auto image_barrier = vk::ImageMemoryBarrier2{
+				.srcStageMask  = vk::PipelineStageFlagBits2::eAllCommands,
+				.srcAccessMask = vk::AccessFlagBits2::eMemoryWrite,
+				.dstStageMask  = vk::PipelineStageFlagBits2::eAllCommands,
+				.dstAccessMask = vk::AccessFlagBits2::eMemoryWrite | vk::AccessFlagBits2::eMemoryRead,
+
+				.oldLayout = current_layout,
+				.newLayout = new_layout,
+
+				.image            = swapchain_images.at(image_index),
+				.subresourceRange = {
+					.aspectMask     = aspect_mask,
+					.baseMipLevel   = 0,
+					.levelCount     = vk::RemainingMipLevels,
+					.baseArrayLayer = 0,
+					.layerCount     = vk::RemainingArrayLayers,
+				},
+			};
+
+			auto dep_info = vk::DependencyInfo{
+				.imageMemoryBarrierCount = 1,
+				.pImageMemoryBarriers    = &image_barrier,
+			};
+
+			cb.pipelineBarrier2(&dep_info);
+		}
+
+		void clear_image(vk::CommandBuffer &cb, uint32_t image_index, vk::ImageLayout image_layout, vk::ClearValue &clear_value, vk::ImageAspectFlags aspect_mask)
+		{
+			auto clear_range = vk::ImageSubresourceRange{
+				.aspectMask     = aspect_mask,
+				.baseMipLevel   = 0,
+				.levelCount     = vk::RemainingMipLevels,
+				.baseArrayLayer = 0,
+				.layerCount     = vk::RemainingArrayLayers,
+			};
+
+			cb.clearColorImage(swapchain_images.at(image_index),
+			                   image_layout,
+			                   clear_value.color,
+			                   clear_range);
 		}
 
 	private:

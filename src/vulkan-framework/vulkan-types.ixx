@@ -14,11 +14,4 @@ export namespace vfw::types
 		vk::Extent3D extent;
 		vk::Format format;
 	};
-
-	struct frame_sync
-	{
-		vk::Semaphore swapchain_semaphore;
-		vk::Semaphore render_semaphore;
-		vk::Fence render_fence;
-	};
 }

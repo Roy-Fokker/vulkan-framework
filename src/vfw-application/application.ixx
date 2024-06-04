@@ -142,6 +142,7 @@ export namespace app_base
 
 		void render()
 		{
+			renderer->draw();
 		}
 
 		auto on_resize(std::uint16_t width, std::uint16_t height) -> bool
