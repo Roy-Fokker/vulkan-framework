@@ -9,6 +9,7 @@ import std;
 import :context;
 import :swapchain;
 import :commandpool;
+import :synchronization;
 import :types;
 
 export namespace vfw
@@ -41,13 +42,10 @@ export namespace vfw
 					.graphics_queue_index = ctx->get_graphics_queue_family(),
 				});
 
-			create_sync_objects();
+			fs = std::make_unique<frame_sync>(ctx->get_device(), max_frame_count);
 		}
 
-		~renderer()
-		{
-			destroy_sync_objects();
-		}
+		~renderer() = default;
 
 		void window_resized(uint16_t width, uint16_t height)
 		{
@@ -129,6 +127,7 @@ export namespace vfw
 		std::unique_ptr<context> ctx{ nullptr };
 		std::unique_ptr<swapchain> sc{ nullptr };
 		std::unique_ptr<commandpool> cp{ nullptr };
+		std::unique_ptr<frame_sync> fs{ nullptr };
 
 		std::vector<types::frame_sync> sync_objects{};
 

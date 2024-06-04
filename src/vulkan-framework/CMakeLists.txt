@@ -45,6 +45,7 @@ target_sources(${PRJ_LIB_NAME}
 		context.ixx
 		swapchain.ixx
 		commandpool.ixx
+		synchronization.ixx
 )
 
 # libraries used by vke
