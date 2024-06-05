@@ -61,7 +61,7 @@ export namespace vfw
 			return image_index;
 		}
 
-		[[nodisard]] auto get_swapchain() -> vk::SwapchainKHR
+		[[nodiscard]] auto get_swapchain() -> vk::SwapchainKHR
 		{
 			return swapchainKHR;
 		}
