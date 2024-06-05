@@ -9,6 +9,7 @@ export module vfw:context;
 
 import std;
 
+import :synchronization;
 import :types;
 
 export namespace vfw
@@ -82,6 +83,39 @@ export namespace vfw
 		[[nodiscard]] auto get_graphics_queue_family() -> std::uint32_t
 		{
 			return graphics_queue_family;
+		}
+
+		void submit(vk::CommandBuffer &cb, const frame_sync::sync_flags &fs_sf)
+		{
+			auto wait_info = vk::SemaphoreSubmitInfo{
+				.semaphore   = fs_sf.swapchain_semaphore,
+				.value       = 1,
+				.stageMask   = vk::PipelineStageFlagBits2::eColorAttachmentOutput,
+				.deviceIndex = 0,
+			};
+
+			auto signal_info = vk::SemaphoreSubmitInfo{
+				.semaphore   = fs_sf.render_semaphore,
+				.value       = 1,
+				.stageMask   = vk::PipelineStageFlagBits2::eAllGraphics,
+				.deviceIndex = 0,
+			};
+
+			auto cb_submit_info = vk::CommandBufferSubmitInfo{
+				.commandBuffer = cb,
+				.deviceMask    = 0,
+			};
+
+			auto submit_info = vk::SubmitInfo2{
+				.waitSemaphoreInfoCount   = 1,
+				.pWaitSemaphoreInfos      = &wait_info,
+				.commandBufferInfoCount   = 1,
+				.pCommandBufferInfos      = &cb_submit_info,
+				.signalSemaphoreInfoCount = 1,
+				.pSignalSemaphoreInfos    = &signal_info,
+			};
+
+			graphics_queue.submit2(submit_info, fs_sf.render_fence);
 		}
 
 		void present(const vk::SwapchainKHR &swapchainKHR, uint32_t image_index, const vk::Semaphore &render_finished_semaphore)

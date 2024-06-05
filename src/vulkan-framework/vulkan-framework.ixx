@@ -102,8 +102,7 @@ export namespace vfw
 
 			record_command_buffer(cb, image_index);
 
-			submit_command_buffer(cb, fs_sf);
-
+			ctx->submit(cb, fs_sf);
 			ctx->present(sc->get_swapchain(), image_index, fs_sf.render_semaphore);
 
 			current_frame = (current_frame + 1) % max_frame_count; // 0...max_frame_count
@@ -129,40 +128,6 @@ export namespace vfw
 			sc->transition_image(cb, image_index, vk::ImageLayout::eGeneral, vk::ImageLayout::ePresentSrcKHR);
 
 			cb.end();
-		}
-
-		void submit_command_buffer(vk::CommandBuffer &cb, const frame_sync::sync_flags &fs_sf)
-		{
-			auto wait_info = vk::SemaphoreSubmitInfo{
-				.semaphore   = fs_sf.swapchain_semaphore,
-				.value       = 1,
-				.stageMask   = vk::PipelineStageFlagBits2::eColorAttachmentOutput,
-				.deviceIndex = 0,
-			};
-
-			auto signal_info = vk::SemaphoreSubmitInfo{
-				.semaphore   = fs_sf.render_semaphore,
-				.value       = 1,
-				.stageMask   = vk::PipelineStageFlagBits2::eAllGraphics,
-				.deviceIndex = 0,
-			};
-
-			auto cb_submit_info = vk::CommandBufferSubmitInfo{
-				.commandBuffer = cb,
-				.deviceMask    = 0,
-			};
-
-			auto submit_info = vk::SubmitInfo2{
-				.waitSemaphoreInfoCount   = 1,
-				.pWaitSemaphoreInfos      = &wait_info,
-				.commandBufferInfoCount   = 1,
-				.pCommandBufferInfos      = &cb_submit_info,
-				.signalSemaphoreInfoCount = 1,
-				.pSignalSemaphoreInfos    = &signal_info,
-			};
-
-			auto graphics_queue = ctx->get_graphics_queue();
-			graphics_queue.submit2(submit_info, fs_sf.render_fence);
 		}
 
 	private:
