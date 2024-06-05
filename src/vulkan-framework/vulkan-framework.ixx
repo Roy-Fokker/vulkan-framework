@@ -20,6 +20,16 @@ export namespace vfw
 	public:
 		renderer(HWND hWnd)
 		{
+			auto get_window_size = [](HWND window_handle) {
+				RECT rect{};
+				GetClientRect(window_handle, &rect);
+
+				return std::array{
+					static_cast<std::uint16_t>(rect.right - rect.left),
+					static_cast<std::uint16_t>(rect.bottom - rect.top)
+				};
+			};
+
 			auto [width, height] = get_window_size(hWnd);
 
 			ctx = std::make_unique<context>(hWnd);
@@ -80,38 +90,26 @@ export namespace vfw
 		{
 			const auto wait_time = 1'000'000'000u;
 			auto device          = ctx->get_device();
-			auto [swapchain_semaphore, render_semaphore, render_fence] =
-				fs->get_sync_objects_at(current_frame);
-			auto cb = cp->get_buffer_at(current_frame);
+			auto fs_sf           = fs->get_sync_objects_at(current_frame);
+			auto cb              = cp->get_buffer_at(current_frame);
 
-			auto result = device.waitForFences(render_fence, true, wait_time);
+			auto result = device.waitForFences(fs_sf.render_fence, true, wait_time);
 			assert(result == vk::Result::eSuccess);
-			device.resetFences(render_fence);
+			device.resetFences(fs_sf.render_fence);
 
-			auto image_index = sc->next_image_index(swapchain_semaphore);
+			auto image_index = sc->next_image_index(fs_sf.swapchain_semaphore);
 			assert(image_index <= max_frame_count);
 
 			record_command_buffer(cb, image_index);
 
-			submit_command_buffer(cb, swapchain_semaphore, render_semaphore, render_fence);
+			submit_command_buffer(cb, fs_sf);
 
-			ctx->present(sc->get_swapchain(), image_index, render_semaphore);
+			ctx->present(sc->get_swapchain(), image_index, fs_sf.render_semaphore);
 
 			current_frame = (current_frame + 1) % max_frame_count; // 0...max_frame_count
 		}
 
 	private:
-		auto get_window_size(HWND window_handle) -> const std::array<uint16_t, 2>
-		{
-			RECT rect{};
-			GetClientRect(window_handle, &rect);
-
-			return {
-				static_cast<std::uint16_t>(rect.right - rect.left),
-				static_cast<std::uint16_t>(rect.bottom - rect.top)
-			};
-		}
-
 		void record_command_buffer(vk::CommandBuffer &cb, uint32_t image_index)
 		{
 			cb.reset();
@@ -133,17 +131,17 @@ export namespace vfw
 			cb.end();
 		}
 
-		void submit_command_buffer(vk::CommandBuffer &cb, vk::Semaphore &swapchain_semaphore, vk::Semaphore &render_semaphore, vk::Fence render_fence)
+		void submit_command_buffer(vk::CommandBuffer &cb, const frame_sync::sync_flags &fs_sf)
 		{
 			auto wait_info = vk::SemaphoreSubmitInfo{
-				.semaphore   = swapchain_semaphore,
+				.semaphore   = fs_sf.swapchain_semaphore,
 				.value       = 1,
 				.stageMask   = vk::PipelineStageFlagBits2::eColorAttachmentOutput,
 				.deviceIndex = 0,
 			};
 
 			auto signal_info = vk::SemaphoreSubmitInfo{
-				.semaphore   = render_semaphore,
+				.semaphore   = fs_sf.render_semaphore,
 				.value       = 1,
 				.stageMask   = vk::PipelineStageFlagBits2::eAllGraphics,
 				.deviceIndex = 0,
@@ -164,7 +162,7 @@ export namespace vfw
 			};
 
 			auto graphics_queue = ctx->get_graphics_queue();
-			graphics_queue.submit2(submit_info, render_fence);
+			graphics_queue.submit2(submit_info, fs_sf.render_fence);
 		}
 
 	private:
