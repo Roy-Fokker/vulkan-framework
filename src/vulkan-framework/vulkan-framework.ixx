@@ -11,6 +11,7 @@ import :context;
 import :swapchain;
 import :commandpool;
 import :synchronization;
+import :image;
 import :types;
 
 export namespace vfw
@@ -51,6 +52,13 @@ export namespace vfw
 											   });
 
 			fs = std::make_unique<frame_sync>(ctx->get_device(), max_frame_count);
+
+			rndr_img = std::make_unique<allocated_image>(ctx->get_device(), ctx->get_mem_allocator(),
+			                                             allocated_image::description{
+															 .width  = width,
+															 .height = height,
+															 .format = vk::Format::eR16G16B16A16Sfloat,
+														 });
 		}
 
 		~renderer() = default;
@@ -68,6 +76,14 @@ export namespace vfw
 					.surface    = ctx->get_surface(),
 					.chosen_gpu = ctx->get_chosen_gpu(),
 				});
+
+			rndr_img.reset(nullptr);
+			rndr_img = std::make_unique<allocated_image>(ctx->get_device(), ctx->get_mem_allocator(),
+			                                             allocated_image::description{
+															 .width  = width,
+															 .height = height,
+															 .format = vk::Format::eR16G16B16A16Sfloat,
+														 });
 
 			// TODO: would frame count changed because of window resize??
 			// should never happen.
@@ -115,34 +131,31 @@ export namespace vfw
 			auto result = cb.begin(&cb_bi);
 			assert(result == vk::Result::eSuccess);
 
-			sc->transition_image(cb, image_index, vk::ImageLayout::eUndefined, vk::ImageLayout::eGeneral);
+			auto image    = rndr_img->get_image();
+			auto img_size = rndr_img->get_size();
 
-			clear_image(cb, sc->get_image(image_index));
+			transition_image(cb, image, vk::ImageLayout::eUndefined, vk::ImageLayout::eGeneral);
+			draw_on_image(cb, image);
+			transition_image(cb, image, vk::ImageLayout::eGeneral, vk::ImageLayout::eTransferSrcOptimal);
 
-			sc->transition_image(cb, image_index, vk::ImageLayout::eGeneral, vk::ImageLayout::ePresentSrcKHR);
+			auto sc_image = sc->get_image(image_index);
+			auto sc_size  = sc->get_size();
+
+			transition_image(cb, sc_image, vk::ImageLayout::eUndefined, vk::ImageLayout::eTransferDstOptimal);
+			copy_image(cb, image, img_size, sc_image, sc_size);
+			transition_image(cb, sc_image, vk::ImageLayout::eTransferDstOptimal, vk::ImageLayout::ePresentSrcKHR);
 
 			cb.end();
 		}
 
-		void clear_image(vk::CommandBuffer &cb, vk::Image &image)
+		void draw_on_image(vk::CommandBuffer &cb, vk::Image &image)
 		{
 			auto clear_color = std::array{ 0.4f, 0.5f, 0.4f, 1.0f };
 			auto clear_value = vk::ClearValue{
 				.color = clear_color,
 			};
 
-			auto clear_range = vk::ImageSubresourceRange{
-				.aspectMask     = vk::ImageAspectFlagBits::eColor,
-				.baseMipLevel   = 0,
-				.levelCount     = vk::RemainingMipLevels,
-				.baseArrayLayer = 0,
-				.layerCount     = vk::RemainingArrayLayers,
-			};
-
-			cb.clearColorImage(image,
-			                   vk::ImageLayout::eGeneral,
-			                   clear_value.color,
-			                   clear_range);
+			clear_image(cb, image, clear_value);
 		}
 
 	private:
@@ -150,6 +163,8 @@ export namespace vfw
 		std::unique_ptr<swapchain> sc{ nullptr };
 		std::unique_ptr<commandpool> cp{ nullptr };
 		std::unique_ptr<frame_sync> fs{ nullptr };
+
+		std::unique_ptr<allocated_image> rndr_img{ nullptr };
 
 		uint32_t max_frame_count = 0;
 		uint32_t current_frame   = 0;

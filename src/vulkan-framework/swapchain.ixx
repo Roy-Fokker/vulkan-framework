@@ -67,43 +67,9 @@ export namespace vfw
 			return swapchainKHR;
 		}
 
-		void transition_image(vk::CommandBuffer &cb, uint32_t image_index, vk::ImageLayout current_layout, vk::ImageLayout new_layout)
+		[[nodiscard]] auto get_size() -> vk::Extent2D
 		{
-			auto aspect_mask = vk::ImageAspectFlags{};
-			if (new_layout == vk::ImageLayout::eDepthAttachmentOptimal)
-			{
-				aspect_mask = vk::ImageAspectFlagBits::eDepth;
-			}
-			else
-			{
-				aspect_mask = vk::ImageAspectFlagBits::eColor;
-			}
-
-			auto image_barrier = vk::ImageMemoryBarrier2{
-				.srcStageMask  = vk::PipelineStageFlagBits2::eAllCommands,
-				.srcAccessMask = vk::AccessFlagBits2::eMemoryWrite,
-				.dstStageMask  = vk::PipelineStageFlagBits2::eAllCommands,
-				.dstAccessMask = vk::AccessFlagBits2::eMemoryWrite | vk::AccessFlagBits2::eMemoryRead,
-
-				.oldLayout = current_layout,
-				.newLayout = new_layout,
-
-				.image            = swapchain_images.at(image_index),
-				.subresourceRange = {
-					.aspectMask     = aspect_mask,
-					.baseMipLevel   = 0,
-					.levelCount     = vk::RemainingMipLevels,
-					.baseArrayLayer = 0,
-					.layerCount     = vk::RemainingArrayLayers,
-				},
-			};
-
-			auto dep_info = vk::DependencyInfo{
-				.imageMemoryBarrierCount = 1,
-				.pImageMemoryBarriers    = &image_barrier,
-			};
-
-			cb.pipelineBarrier2(&dep_info);
+			return swapchain_extent;
 		}
 
 	private:
