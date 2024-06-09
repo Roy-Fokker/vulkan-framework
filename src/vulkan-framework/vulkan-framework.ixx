@@ -33,7 +33,7 @@ export namespace vfw
 			auto [width, height] = get_window_size(hWnd);
 
 			ctx = std::make_unique<context>(hWnd);
-			sc  = std::make_unique<swapchain>(ctx->get_device(), ctx->get_mem_allocator(),
+			sc  = std::make_unique<swapchain>(ctx->get_device(),
 			                                  swapchain::description{
 												  .width      = width,
 												  .height     = height,
@@ -62,7 +62,6 @@ export namespace vfw
 			sc.reset(nullptr);
 			sc = std::make_unique<swapchain>(
 				ctx->get_device(),
-				ctx->get_mem_allocator(),
 				swapchain::description{
 					.width      = width,
 					.height     = height,
@@ -118,16 +117,32 @@ export namespace vfw
 
 			sc->transition_image(cb, image_index, vk::ImageLayout::eUndefined, vk::ImageLayout::eGeneral);
 
+			clear_image(cb, sc->get_image(image_index));
+
+			sc->transition_image(cb, image_index, vk::ImageLayout::eGeneral, vk::ImageLayout::ePresentSrcKHR);
+
+			cb.end();
+		}
+
+		void clear_image(vk::CommandBuffer &cb, vk::Image &image)
+		{
 			auto clear_color = std::array{ 0.4f, 0.5f, 0.4f, 1.0f };
 			auto clear_value = vk::ClearValue{
 				.color = clear_color,
 			};
 
-			sc->clear_image(cb, image_index, vk::ImageLayout::eGeneral, clear_value, vk::ImageAspectFlagBits::eColor);
+			auto clear_range = vk::ImageSubresourceRange{
+				.aspectMask     = vk::ImageAspectFlagBits::eColor,
+				.baseMipLevel   = 0,
+				.levelCount     = vk::RemainingMipLevels,
+				.baseArrayLayer = 0,
+				.layerCount     = vk::RemainingArrayLayers,
+			};
 
-			sc->transition_image(cb, image_index, vk::ImageLayout::eGeneral, vk::ImageLayout::ePresentSrcKHR);
-
-			cb.end();
+			cb.clearColorImage(image,
+			                   vk::ImageLayout::eGeneral,
+			                   clear_value.color,
+			                   clear_range);
 		}
 
 	private:

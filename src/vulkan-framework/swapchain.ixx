@@ -4,13 +4,9 @@ module;
 
 #include <VkBootstrap.h>
 
-#include <vma/vk_mem_alloc.h>
-
 export module vfw:swapchain;
 
 import std;
-
-import :types;
 
 export namespace vfw
 {
@@ -32,8 +28,8 @@ export namespace vfw
 		swapchain(swapchain &&src)                 = delete;
 		swapchain &operator=(swapchain &&src)      = delete;
 
-		swapchain(vk::Device device, VmaAllocator allocator, const description &desc)
-			: device(device), allocator(allocator)
+		swapchain(vk::Device device, const description &desc)
+			: device(device)
 		{
 			create_swapchain(desc);
 		}
@@ -59,6 +55,11 @@ export namespace vfw
 			                                                        VK_NULL_HANDLE);
 
 			return image_index;
+		}
+
+		[[nodiscard]] auto get_image(uint32_t image_index) -> vk::Image &
+		{
+			return swapchain_images.at(image_index);
 		}
 
 		[[nodiscard]] auto get_swapchain() -> vk::SwapchainKHR
@@ -105,22 +106,6 @@ export namespace vfw
 			cb.pipelineBarrier2(&dep_info);
 		}
 
-		void clear_image(vk::CommandBuffer &cb, uint32_t image_index, vk::ImageLayout image_layout, vk::ClearValue &clear_value, vk::ImageAspectFlags aspect_mask)
-		{
-			auto clear_range = vk::ImageSubresourceRange{
-				.aspectMask     = aspect_mask,
-				.baseMipLevel   = 0,
-				.levelCount     = vk::RemainingMipLevels,
-				.baseArrayLayer = 0,
-				.layerCount     = vk::RemainingArrayLayers,
-			};
-
-			cb.clearColorImage(swapchain_images.at(image_index),
-			                   image_layout,
-			                   clear_value.color,
-			                   clear_range);
-		}
-
 	private:
 		void create_swapchain(const description &desc)
 		{
@@ -149,14 +134,10 @@ export namespace vfw
 			{
 				swapchain_imageviews.push_back(vk_iv);
 			}
-
-			allocate_image_memory();
 		}
 
 		void destroy_swapchain()
 		{
-			free_image_memory();
-
 			for (auto &&iv : swapchain_imageviews)
 			{
 				device.destroyImageView(iv);
@@ -166,80 +147,12 @@ export namespace vfw
 			device.destroySwapchainKHR(swapchainKHR);
 		}
 
-		void allocate_image_memory()
-		{
-			auto draw_image_extent = vk::Extent3D{
-				swapchain_extent.width,
-				swapchain_extent.height,
-				1,
-			};
-
-			draw_image = types::allocated_image{
-				.extent = draw_image_extent,
-				.format = vk::Format::eR16G16B16A16Sfloat,
-			};
-
-			auto draw_image_usage = vk::ImageUsageFlags{
-				vk::ImageUsageFlagBits::eTransferSrc |
-				vk::ImageUsageFlagBits::eTransferDst |
-				vk::ImageUsageFlagBits::eStorage |
-				vk::ImageUsageFlagBits::eColorAttachment
-			};
-
-			auto image_ci = vk::ImageCreateInfo{
-				.imageType   = vk::ImageType::e2D,
-				.format      = draw_image.format,
-				.extent      = draw_image.extent,
-				.mipLevels   = 1,
-				.arrayLayers = 1,
-				.samples     = vk::SampleCountFlagBits::e1,
-				.tiling      = vk::ImageTiling::eOptimal,
-				.usage       = draw_image_usage,
-			};
-
-			auto image_ai = VmaAllocationCreateInfo{
-				.usage         = VMA_MEMORY_USAGE_GPU_ONLY,
-				.requiredFlags = VkMemoryPropertyFlags{ VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT },
-			};
-
-			vmaCreateImage(allocator,
-			               reinterpret_cast<VkImageCreateInfo *>(&image_ci),
-			               &image_ai,
-			               reinterpret_cast<VkImage *>(&draw_image.image),
-			               &draw_image.allocation,
-			               nullptr);
-
-			auto view_ci = vk::ImageViewCreateInfo{
-				.image            = draw_image.image,
-				.viewType         = vk::ImageViewType::e2D,
-				.format           = draw_image.format,
-				.subresourceRange = {
-					.aspectMask     = vk::ImageAspectFlagBits::eColor,
-					.baseMipLevel   = 0,
-					.levelCount     = 1,
-					.baseArrayLayer = 0,
-					.layerCount     = 1,
-				},
-			};
-
-			draw_image.view = device.createImageView(view_ci);
-		}
-
-		void free_image_memory()
-		{
-			device.destroyImageView(draw_image.view);
-			vmaDestroyImage(allocator, draw_image.image, draw_image.allocation);
-		}
-
 	private:
 		vk::Device device;
-		VmaAllocator allocator;
 
 		vk::SwapchainKHR swapchainKHR;
 		vk::Extent2D swapchain_extent;
 		std::vector<vk::Image> swapchain_images;
 		std::vector<vk::ImageView> swapchain_imageviews;
-
-		types::allocated_image draw_image;
 	};
 }
