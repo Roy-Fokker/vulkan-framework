@@ -44,8 +44,20 @@ based on C++23 Project Template
 		"console": "integratedTerminal"
 	}
   ```
-- MS CMake-Tools has new mechanism to do above. Documentation is bit obtuse, so need to parse it.
+- MS CMake-Tools for VSCode has new mechanism to do above. Documentation is bit obtuse, so need to parse it.
+- CMake v 3.29.3 or Lower don't correctly look for DXC library and throw spurious errors/warnings
+  - In `FindVulkan.cmake` in `{CMake's Installer Dir}\share\cmake-<version>\` at line `474` following needs to be added
+    ```CMake
+		find_library(Vulkan_dxc_DEBUG_LIBRARY
+		  NAMES dxcompilerd
+		  HINTS
+		    ${_Vulkan_hint_library_search_paths})
+		mark_as_advanced(Vulkan_dxc_DEBUG_LIBRARY)
+    ```
+  - Ref <https://gitlab.kitware.com/cmake/cmake/-/issues/25722>  
+    and <https://discourse.cmake.org/t/findvulkan-cmake-cant-find-dxc-debug-libraries-while-present-as-its-not-looking-for-them/10198/2>
 
 # Reference Links
 - https://vk-guide.com
 - https://medium.com/traverse-research/bindless-rendering-setup-afeb678d77fc
+- https://edw.is/learning-vulkan/

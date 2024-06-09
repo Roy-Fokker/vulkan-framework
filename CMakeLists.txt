@@ -16,7 +16,7 @@ set(CMAKE_CXX_STANDARD 23)
 set(CXX_STANDARD_REQUIRED ON)
 
 # include logic to build glsl files
-include(cmake/glsl_compiler.cmake)
+include(cmake/shader_compiler.cmake)
 
 # C++ Standard library modules
 include(cmake/std23modules.cmake)
