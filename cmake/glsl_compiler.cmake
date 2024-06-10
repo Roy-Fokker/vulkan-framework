@@ -12,6 +12,10 @@ function (target_glsl_sources TARGET)
 		# get the absolute path of current source file
 		file(REAL_PATH ${source} source_abs)
 
+		if(NOT EXISTS ${source_abs})
+			message(FATAL_ERROR "Cannot file shader file: ${source}")
+		endif()
+
 		# get only the filename from absolute path
 		cmake_path(GET source_abs FILENAME basename)
 
@@ -24,10 +28,6 @@ function (target_glsl_sources TARGET)
 
 		# full path to compiled output 
 		set(output ${shader_dir}/${basename}.spv)
-		
-		if(NOT EXISTS ${source_abs})
-			message(FATAL_ERROR "Cannot file shader file: ${source}")
-		endif()
 
 		# call vulkan sdk's glslc compiler with source and output arguments.
 		add_custom_command(
