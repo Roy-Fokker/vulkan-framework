@@ -33,7 +33,7 @@ function (target_glsl_sources TARGET)
 		add_custom_command(
 			OUTPUT ${output}
 			COMMAND ${CMAKE_COMMAND} -E make_directory ${shader_dir}
-			COMMAND Vulkan::glslc ${source_abs} -o ${output}
+			COMMAND Vulkan::glslc ${source_abs} -o ${output} --target-env=vulkan1.3
 			DEPENDS ${source_abs}
 			COMMENT "Compiling SPIRV: ${source} -> ${output}"
 			VERBATIM
