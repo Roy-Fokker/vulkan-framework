@@ -108,6 +108,8 @@ export namespace vfw
 
 		void free_image_memory()
 		{
+			device.waitIdle();
+
 			device.destroyImageView(vkview);
 			vmaDestroyImage(allocator, vkimage, allocation);
 		}
