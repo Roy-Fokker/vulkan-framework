@@ -12,6 +12,7 @@ import :swapchain;
 import :commandpool;
 import :synchronization;
 import :image;
+import :descriptors;
 import :types;
 
 export namespace vfw
@@ -59,9 +60,14 @@ export namespace vfw
 															 .height = height,
 															 .format = vk::Format::eR16G16B16A16Sfloat,
 														 });
+
+			create_descriptors();
 		}
 
-		~renderer() = default;
+		~renderer()
+		{
+			destroy_descriptors();
+		}
 
 		void window_resized(uint16_t width, uint16_t height)
 		{
@@ -124,6 +130,45 @@ export namespace vfw
 		}
 
 	private:
+		void create_descriptors()
+		{
+			vk::Device device = ctx->get_device();
+
+			auto pool_sizes = std::vector<descriptor_allocator::pool_size_ratio>{
+				{ vk::DescriptorType::eStorageImage, 1 },
+			};
+
+			da = std::make_unique<descriptor_allocator>(device, 10, pool_sizes);
+
+			auto builder = descriptor_layout_builder();
+			builder.add_binding(0, vk::DescriptorType::eStorageImage); // TODO: probably should match pool_sizes
+			rndr_img_desc_layout = builder.build(device, vk::ShaderStageFlagBits::eCompute);
+
+			rndr_img_descriptor = da->allocate(rndr_img_desc_layout);
+
+			auto img_info = vk::DescriptorImageInfo{
+				.imageView   = rndr_img->get_view(),
+				.imageLayout = vk::ImageLayout::eGeneral,
+			};
+			auto rndr_write_descriptor = vk::WriteDescriptorSet{
+				.dstSet          = rndr_img_descriptor,
+				.dstBinding      = 0,
+				.descriptorCount = 1,
+				.descriptorType  = vk::DescriptorType::eStorageImage,
+				.pImageInfo      = &img_info,
+			};
+
+			device.updateDescriptorSets(rndr_write_descriptor, nullptr);
+		}
+
+		void destroy_descriptors()
+		{
+			vk::Device device = ctx->get_device();
+
+			// da->free(rndr_img_descriptor);  // TODO: can't free because flag doesn't say it can be freed
+			device.destroyDescriptorSetLayout(rndr_img_desc_layout);
+		}
+
 		void record_command_buffer(vk::CommandBuffer &cb, uint32_t image_index)
 		{
 			cb.reset();
@@ -165,6 +210,10 @@ export namespace vfw
 		std::unique_ptr<frame_sync> fs{ nullptr };
 
 		std::unique_ptr<allocated_image> rndr_img{ nullptr };
+
+		std::unique_ptr<descriptor_allocator> da{ nullptr };
+		vk::DescriptorSetLayout rndr_img_desc_layout;
+		vk::DescriptorSet rndr_img_descriptor;
 
 		uint32_t max_frame_count = 0;
 		uint32_t current_frame   = 0;

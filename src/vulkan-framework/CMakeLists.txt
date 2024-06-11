@@ -47,6 +47,7 @@ target_sources(${PRJ_LIB_NAME}
 		commandpool.ixx
 		synchronization.ixx
 		image.ixx
+		descriptors.ixx
 )
 
 # libraries used by vke
