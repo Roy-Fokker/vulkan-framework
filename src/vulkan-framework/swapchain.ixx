@@ -104,10 +104,9 @@ export namespace vfw
 
 		void destroy_swapchain()
 		{
-			for (auto &&iv : swapchain_imageviews)
-			{
+			std::ranges::for_each(swapchain_imageviews, [&](auto &&iv) {
 				device.destroyImageView(iv);
-			}
+			});
 			swapchain_imageviews.clear();
 
 			device.destroySwapchainKHR(swapchainKHR);

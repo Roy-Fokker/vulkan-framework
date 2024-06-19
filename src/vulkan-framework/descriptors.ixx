@@ -22,10 +22,9 @@ export namespace vfw
 		auto build(vk::Device device, vk::ShaderStageFlags shader_stages, vk::DescriptorSetLayoutCreateFlags flags = {}, void *pNext = nullptr)
 			-> vk::DescriptorSetLayout
 		{
-			for (auto &b : bindings)
-			{
+			std::ranges::for_each(bindings, [&](auto &b) {
 				b.stageFlags |= shader_stages;
-			}
+			});
 
 			auto ci = vk::DescriptorSetLayoutCreateInfo{
 				.pNext        = pNext,

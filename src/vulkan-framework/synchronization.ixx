@@ -26,10 +26,7 @@ export namespace vfw
 		frame_sync(vk::Device device, uint32_t max_frame_count)
 			: device(device)
 		{
-			sync_objects.resize(max_frame_count);
-
-			for (auto &&sync_object : sync_objects)
-			{
+			auto make_sync_obj_fn = [&](auto &&sync_object) {
 				auto semaphore_ci               = vk::SemaphoreCreateInfo{};
 				sync_object.swapchain_semaphore = device.createSemaphore(semaphore_ci);
 				sync_object.render_semaphore    = device.createSemaphore(semaphore_ci);
@@ -39,7 +36,10 @@ export namespace vfw
 				};
 
 				sync_object.render_fence = device.createFence(fence_ci);
-			}
+			};
+
+			sync_objects.resize(max_frame_count);
+			std::ranges::for_each(sync_objects, make_sync_obj_fn);
 		}
 
 		~frame_sync()

@@ -482,11 +482,7 @@ export namespace win32
 			// Reset relative positions for all axis
 			axis_values_relative.fill(0);
 
-			for (auto &&[i, raw_data] : input_buffer | std::views::enumerate)
-			{
-				if (i >= count)
-					break;
-
+			auto process_fn = [&](auto &&raw_data) {
 				switch (raw_data.header.dwType)
 				{
 				case RIM_TYPEKEYBOARD:
@@ -500,7 +496,10 @@ export namespace win32
 					// assert(false);
 					break;
 				}
-			}
+			};
+
+			std::ranges::for_each(input_buffer | std::views::take(count),
+			                      process_fn);
 		}
 
 		void process_keyboard_input(const RAWKEYBOARD &data);
