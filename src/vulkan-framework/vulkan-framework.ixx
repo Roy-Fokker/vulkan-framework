@@ -13,7 +13,10 @@ import :commandpool;
 import :synchronization;
 import :image;
 import :descriptors;
+import :pipelines;
 import :types;
+
+export using vfw::shader_stage;
 
 export namespace vfw
 {
@@ -61,12 +64,15 @@ export namespace vfw
 															 .format = vk::Format::eR16G16B16A16Sfloat,
 														 });
 
+			create_descriptor_layout();
 			create_descriptors();
+
+			pl = std::make_unique<pipeline>(ctx->get_device(), rndr_img_desc_layout);
 		}
 
 		~renderer()
 		{
-			destroy_descriptors();
+			destroy_descriptor_layout();
 		}
 
 		void window_resized(uint16_t width, uint16_t height)
@@ -83,6 +89,7 @@ export namespace vfw
 					.chosen_gpu = ctx->get_chosen_gpu(),
 				});
 
+			da.reset(nullptr);
 			rndr_img.reset(nullptr);
 			rndr_img = std::make_unique<allocated_image>(ctx->get_device(), ctx->get_mem_allocator(),
 			                                             allocated_image::description{
@@ -90,6 +97,7 @@ export namespace vfw
 															 .height = height,
 															 .format = vk::Format::eR16G16B16A16Sfloat,
 														 });
+			create_descriptors();
 
 			// TODO: would frame count changed because of window resize??
 			// should never happen.
@@ -105,6 +113,11 @@ export namespace vfw
 						.graphics_queue_index = ctx->get_graphics_queue_family(),
 					});
 			}
+		}
+
+		void add_shader(shader_stage stage, std::span<uint32_t> data)
+		{
+			pl->add_shader(stage, data);
 		}
 
 		void draw()
@@ -140,10 +153,6 @@ export namespace vfw
 
 			da = std::make_unique<descriptor_allocator>(device, 10, pool_sizes);
 
-			auto builder = descriptor_layout_builder();
-			builder.add_binding(0, vk::DescriptorType::eStorageImage); // TODO: probably should match pool_sizes
-			rndr_img_desc_layout = builder.build(device, vk::ShaderStageFlagBits::eCompute);
-
 			rndr_img_descriptor = da->allocate(rndr_img_desc_layout);
 
 			auto img_info = vk::DescriptorImageInfo{
@@ -161,7 +170,16 @@ export namespace vfw
 			device.updateDescriptorSets(rndr_write_descriptor, nullptr);
 		}
 
-		void destroy_descriptors()
+		void create_descriptor_layout()
+		{
+			vk::Device device = ctx->get_device();
+
+			auto builder = descriptor_layout_builder();
+			builder.add_binding(0, vk::DescriptorType::eStorageImage); // TODO: probably should match pool_sizes
+			rndr_img_desc_layout = builder.build(device, vk::ShaderStageFlagBits::eCompute);
+		}
+
+		void destroy_descriptor_layout()
 		{
 			vk::Device device = ctx->get_device();
 
@@ -193,14 +211,28 @@ export namespace vfw
 			cb.end();
 		}
 
-		void draw_on_image(vk::CommandBuffer &cb, vk::Image &image)
+		void draw_on_image(vk::CommandBuffer &cb, [[maybe_unused]] vk::Image &image)
 		{
+			if (not pl)
+			{
+				return;
+			}
+
 			auto clear_color = std::array{ 0.4f, 0.5f, 0.4f, 1.0f };
 			auto clear_value = vk::ClearValue{
 				.color = clear_color,
 			};
 
-			clear_image(cb, image, clear_value);
+			// clear_image(cb, image, clear_value);
+
+			cb.bindPipeline(vk::PipelineBindPoint::eCompute, pl->get_pipeline());
+
+			cb.bindDescriptorSets(vk::PipelineBindPoint::eCompute, pl->get_layout(), 0, rndr_img_descriptor, nullptr);
+
+			auto [width, height] = rndr_img->get_size();
+			auto grp_width       = static_cast<uint32_t>(std::ceil(width / 16.0f)),
+				 grp_height      = static_cast<uint32_t>(std::ceil(height / 16.0f));
+			cb.dispatch(grp_width, grp_height, 1);
 		}
 
 	private:
@@ -214,6 +246,8 @@ export namespace vfw
 		std::unique_ptr<descriptor_allocator> da{ nullptr };
 		vk::DescriptorSetLayout rndr_img_desc_layout;
 		vk::DescriptorSet rndr_img_descriptor;
+
+		std::unique_ptr<pipeline> pl{ nullptr };
 
 		uint32_t max_frame_count = 0;
 		uint32_t current_frame   = 0;

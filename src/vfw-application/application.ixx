@@ -113,8 +113,10 @@ export namespace app_base
 
 		void setup_pipeline()
 		{
-			auto vert_shader_bin = read_file("shaders/basic_pc_shader.vert.spv");
-			auto frag_shader_bin = read_file("shaders/basic_pc_shader.frag.spv");
+			auto comp_hlslshader_bin = read_file("shaders/basic_compute.hlsl.spv");
+			auto comp_glslshader_bin = read_file("shaders/basic_compute.comp.spv");
+
+			renderer->add_shader(vfw::shader_stage::compute, comp_hlslshader_bin);
 		}
 
 		void setup_model()

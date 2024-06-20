@@ -48,6 +48,7 @@ target_sources(${PRJ_LIB_NAME}
 		synchronization.ixx
 		image.ixx
 		descriptors.ixx
+		pipelines.ixx
 )
 
 # libraries used by vke
