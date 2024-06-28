@@ -15,9 +15,6 @@ set(CMAKE_CXX_STANDARD 23)
 # standard is required
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# include logic to build glsl files
-include(cmake/shader_compiler.cmake)
-
 # shader source folder
 add_subdirectory(src/shaders)
 

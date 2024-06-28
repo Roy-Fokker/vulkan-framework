@@ -18,8 +18,8 @@
 
 cmake_minimum_required(VERSION 3.29.0 FATAL_ERROR)
 
-include(cmake/glsl_compiler.cmake)
-include(cmake/hlsl_compiler.cmake)
+include(${PROJECT_SOURCE_DIR}/cmake/glsl_compiler.cmake)
+include(${PROJECT_SOURCE_DIR}/cmake/hlsl_compiler.cmake)
 
 function(target_shader_sources TARGET)
 	cmake_parse_arguments(arg "" "" "HLSL;GLSL" ${ARGN})  # Parse the arguments into GLSL and HLSL groups

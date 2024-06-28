@@ -1,3 +1,6 @@
+# include logic to build glsl files
+include(${PROJECT_SOURCE_DIR}/cmake/shader_compiler.cmake)
+
 # set library name variable
 set(PRJ_SHDR_LIB_NAME "shaders")
 
