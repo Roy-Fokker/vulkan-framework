@@ -4,6 +4,7 @@ find_package(Vulkan REQUIRED)
 find_package(VulkanMemoryAllocator CONFIG REQUIRED)
 find_package(vk-bootstrap CONFIG REQUIRED)
 find_package(glm CONFIG REQUIRED)
+find_package(stdmodules REQUIRED)
 
 # set library name variable
 set(PRJ_LIB_NAME "vulkan-framework")
@@ -54,7 +55,7 @@ target_sources(${PRJ_LIB_NAME}
 # libraries used by vke
 target_link_libraries(${PRJ_LIB_NAME}
 	PRIVATE
-		std23modules                                 # precompiled mdoules for C++ 23 Standard Libary
+		stdmodules                                   # precompiled mdoules for C++ 23 Standard Libary
 		Vulkan::Vulkan                               # Vulkan SDK
 		GPUOpen::VulkanMemoryAllocator               # Vulkan Memory Allocator
 		vk-bootstrap::vk-bootstrap                   # vk-bootstrap
