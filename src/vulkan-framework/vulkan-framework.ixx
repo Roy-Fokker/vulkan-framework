@@ -37,27 +37,29 @@ export namespace vfw
 
 			auto [width, height] = get_window_size(hWnd);
 
-			ctx = std::make_unique<context>(hWnd);
-			sc  = std::make_unique<swapchain>(ctx->get_device(),
-			                                  swapchain::description{
-												  .width      = width,
-												  .height     = height,
-												  .surface    = ctx->get_surface(),
-												  .chosen_gpu = ctx->get_chosen_gpu(),
-                                             });
+			ctx         = std::make_unique<context>(hWnd);
+			auto device = ctx->get_device();
+
+			sc = std::make_unique<swapchain>(device,
+			                                 swapchain::description{
+												 .width      = width,
+												 .height     = height,
+												 .surface    = ctx->get_surface(),
+												 .chosen_gpu = ctx->get_chosen_gpu(),
+											 });
 
 			max_frame_count = sc->get_image_count();
 
-			cp = std::make_unique<commandpool>(ctx->get_device(),
+			cp = std::make_unique<commandpool>(device,
 			                                   commandpool::description{
 												   .max_frame_count      = max_frame_count,
 												   .graphics_queue       = ctx->get_graphics_queue(),
 												   .graphics_queue_index = ctx->get_graphics_queue_family(),
 											   });
 
-			fs = std::make_unique<frame_sync>(ctx->get_device(), max_frame_count);
+			fs = std::make_unique<frame_sync>(device, max_frame_count);
 
-			rndr_img = std::make_unique<allocated_image>(ctx->get_device(), ctx->get_mem_allocator(),
+			rndr_img = std::make_unique<allocated_image>(device, ctx->get_mem_allocator(),
 			                                             allocated_image::description{
 															 .width  = width,
 															 .height = height,
@@ -67,7 +69,7 @@ export namespace vfw
 			create_descriptor_layout();
 			create_descriptors();
 
-			pl = std::make_unique<pipeline>(ctx->get_device(), rndr_img_desc_layout);
+			pl = std::make_unique<pipeline>(device, rndr_img_desc_layout);
 		}
 
 		~renderer()
