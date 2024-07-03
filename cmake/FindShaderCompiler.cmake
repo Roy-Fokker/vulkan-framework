@@ -29,24 +29,26 @@ function(target_shader_sources TARGET)
 	endif()
 endfunction()
 
+if (NOT ShaderCompiler_FOUND)
+	# usage message
+	message("Shader Compiler found.
+	Usage: 
+		target_shader_sources(<target>
+			[GLSL
+				<glsl_shader_file>
+				...
+			]
+			[HLSL
+				<hlsl_shader_file> : <hlsl_shader_profile>
+				...
+			]
+		)
+
+	Output:
+		${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${shader_file_fldr}/<shader_file>.spv
+		...
+	")
+endif()
+
 # add Cache variable to check if find_package was already called once
 set(ShaderCompiler_FOUND true)
-
-# usage message
-message("Shader Compiler found.
-Usage: 
-	target_shader_sources(<target>
-		[GLSL
-			<glsl_shader_file>
-			...
-		]
-		[HLSL
-			<hlsl_shader_file> : <hlsl_shader_profile>
-			...
-		]
-	)
-
-Output:
-	${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${shader_file_fldr}/<shader_file>.spv
-	...
-")
