@@ -1,5 +1,6 @@
 # include logic to build glsl files
-include(${PROJECT_SOURCE_DIR}/cmake/shader_compiler.cmake)
+#include(${PROJECT_SOURCE_DIR}/cmake/shader_compiler.cmake)
+find_package(ShaderCompiler REQUIRED)
 
 # set library name variable
 set(PRJ_SHDR_LIB_NAME "shaders")
@@ -12,6 +13,8 @@ add_library(${PRJ_SHDR_LIB_NAME} INTERFACE)
 target_shader_sources(${PRJ_SHDR_LIB_NAME}
 	GLSL
 		basic_compute.comp
+		push_const_compute.comp
 	HLSL
 		basic_compute.hlsl : cs_6_4
+		push_const_compute.hlsl : cs_6_4
 )

@@ -49,7 +49,7 @@ function(target_hlsl_sources TARGET)
 			COMMAND ${CMAKE_COMMAND} -E make_directory ${shader_dir}
 			COMMAND Vulkan::dxc_exe -spirv -E main -Fo ${output} -T ${hlsl_profile} ${source_abs}
 			DEPENDS ${source_abs}
-			COMMENT "Compiling SPIRV: ${source} -> ${output}"
+			COMMENT "DXC Compiling SPIRV: ${hlsl_filename} -> ${output}"
 			VERBATIM
 		)
 
