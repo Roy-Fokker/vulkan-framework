@@ -5,6 +5,7 @@ module;
 export module vfw:pipelines;
 
 import std;
+import :types;
 
 export namespace vfw
 {
@@ -27,9 +28,17 @@ export namespace vfw
 		pipeline(vk::Device device, vk::DescriptorSetLayout &set_layout)
 			: device(device)
 		{
+			auto pc_rng = vk::PushConstantRange{
+				.stageFlags = vk::ShaderStageFlagBits::eCompute,
+				.offset     = 0,
+				.size       = sizeof(types::compute_push_constants),
+			};
+
 			auto pl_ci = vk::PipelineLayoutCreateInfo{
-				.setLayoutCount = 1,
-				.pSetLayouts    = &set_layout,
+				.setLayoutCount         = 1,
+				.pSetLayouts            = &set_layout,
+				.pushConstantRangeCount = 1,
+				.pPushConstantRanges    = &pc_rng,
 			};
 
 			layout = device.createPipelineLayout(pl_ci);
