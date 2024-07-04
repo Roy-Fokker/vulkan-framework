@@ -72,8 +72,8 @@ export namespace vfw
 			pl = std::make_unique<pipeline>(device, rndr_img_desc_layout);
 
 			push_constants = types::compute_push_constants{
-				.data1 = { 1, 0, 0, 1 },
-				.data2 = { 0, 0, 1, 1 },
+				.data1 = { 0.8f, 0.8f, 0.f, 1.f },
+				.data2 = { 0.0f, 0.4f, 0.8f, 1.f },
 			};
 		}
 
