@@ -3,10 +3,11 @@
 
 cmake_minimum_required(VERSION 3.29.0 FATAL_ERROR)
 
-# exit if called multiple times.
-if(ShaderCompiler_FOUND)
-	return()
-endif()
+# Componenets we need CMake to ensure exist
+set (VULKAN_COMPONENTS "dxc" "dxc_exe" "glslc")
+
+# look for above components in Vulkan SDK
+find_package(Vulkan REQUIRED COMPONENTS ${VULKAN_COMPONENTS})
 
 # include cmake files for each shader file type
 include(${PROJECT_SOURCE_DIR}/cmake/glsl_compiler.cmake)
@@ -29,26 +30,21 @@ function(target_shader_sources TARGET)
 	endif()
 endfunction()
 
-if (NOT ShaderCompiler_FOUND)
-	# usage message
-	message("Shader Compiler found.
-	Usage: 
-		target_shader_sources(<target>
-			[GLSL
-				<glsl_shader_file>
-				...
-			]
-			[HLSL
-				<hlsl_shader_file> : <hlsl_shader_profile>
-				...
-			]
-		)
+# usage message
+message("Shader Compiler found.
+Usage: 
+	target_shader_sources(<target>
+		[GLSL
+			<glsl_shader_file>
+			...
+		]
+		[HLSL
+			<hlsl_shader_file> : <hlsl_shader_profile>
+			...
+		]
+	)
 
-	Output:
-		${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${shader_file_fldr}/<shader_file>.spv
-		...
-	")
-endif()
-
-# add Cache variable to check if find_package was already called once
-set(ShaderCompiler_FOUND true)
+Output:
+	${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/<shader_fldr>/<shader_file>.spv
+	...
+")

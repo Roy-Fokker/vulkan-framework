@@ -3,11 +3,6 @@
 
 # Usage: target_shader_sources(<target> [[<file> : <profile>]...])
 function(target_hlsl_sources TARGET)
-	# Componenets we need CMake to ensure exist
-	set (VULKAN_COMPONENTS "dxc" "dxc_exe")
-	# look for above components in Vulkan SDK
-	find_package(Vulkan REQUIRED COMPONENTS ${VULKAN_COMPONENTS})
-
 	if (NOT TARGET Vulkan::dxc_exe)
 		message(FATAL_ERROR "[Error]: Could not find dxc")
 	endif()

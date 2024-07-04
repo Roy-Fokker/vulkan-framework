@@ -3,7 +3,6 @@
 
 # Usage: target_glsl_sources(<target> [<file> ...])
 function (target_glsl_sources TARGET)
-	find_package(Vulkan REQUIRED)
 	if (NOT TARGET Vulkan::glslc)
 		message(FATAL_ERROR "[Error]: Could not find glslc.")
 	endif()
@@ -47,5 +46,4 @@ function (target_glsl_sources TARGET)
 		# add compilation of this shader as dependency of the target
 		add_dependencies("${TARGET}" "${shader_target}")
 	endforeach()
-
 endfunction()
