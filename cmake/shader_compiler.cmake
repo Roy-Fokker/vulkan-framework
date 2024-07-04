@@ -31,8 +31,7 @@ function(target_shader_sources TARGET)
 endfunction()
 
 # usage message
-message("Shader Compiler found.
-Usage: 
+message("The shader_compiler.cmake usage: 
 	target_shader_sources(<target>
 		[GLSL
 			<glsl_shader_file>
