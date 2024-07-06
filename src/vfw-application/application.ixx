@@ -120,7 +120,7 @@ export namespace app_base
 			auto comp_hlslshader_bin = read_file("shaders/push_const_compute.hlsl.spv");
 			auto comp_glslshader_bin = read_file("shaders/push_const_compute.comp.spv");
 
-			renderer->add_shader(vfw::shader_stage::compute, comp_hlslshader_bin);
+			renderer->add_shader(vfw::types::shader_stage::compute, comp_hlslshader_bin);
 		}
 
 		void setup_model()

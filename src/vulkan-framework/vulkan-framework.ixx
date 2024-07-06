@@ -16,7 +16,7 @@ import :descriptors;
 import :pipelines;
 import :types;
 
-export using vfw::shader_stage;
+export using vfw::types::shader_stage;
 
 export namespace vfw
 {

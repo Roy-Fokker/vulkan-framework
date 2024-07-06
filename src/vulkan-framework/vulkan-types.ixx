@@ -4,6 +4,8 @@ module;
 
 export module vfw:types;
 
+import std;
+
 export namespace vfw::types
 {
 	struct compute_push_constants
@@ -14,4 +16,10 @@ export namespace vfw::types
 		glm::vec4 data4;
 	};
 
+	enum class shader_stage
+	{
+		vertex,
+		pixel,
+		compute,
+	};
 }

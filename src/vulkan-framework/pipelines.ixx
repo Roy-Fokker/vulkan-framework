@@ -9,13 +9,6 @@ import :types;
 
 export namespace vfw
 {
-	enum class shader_stage
-	{
-		vertex,
-		pixel,
-		compute,
-	};
-
 	class pipeline final
 	{
 	public:
@@ -52,7 +45,7 @@ export namespace vfw
 			device.destroyPipelineLayout(layout);
 		}
 
-		void add_shader(shader_stage stage, std::span<uint32_t> data)
+		void add_shader(types::shader_stage stage, std::span<uint32_t> data)
 		{
 			auto make_shader_module = [&](std::span<uint32_t> shader_bin) {
 				auto ci = vk::ShaderModuleCreateInfo{
@@ -63,15 +56,16 @@ export namespace vfw
 				return device.createShaderModule(ci);
 			};
 
-			auto translate_to_vk_flage = [](shader_stage stage) -> vk::ShaderStageFlagBits {
+			auto translate_to_vk_flage = [](types::shader_stage stage) -> vk::ShaderStageFlagBits {
 				using enum vk::ShaderStageFlagBits;
 				switch (stage)
 				{
-				case shader_stage::vertex:
+					using enum types::shader_stage;
+				case vertex:
 					return eVertex;
-				case shader_stage::pixel:
+				case pixel:
 					return eFragment;
-				case shader_stage::compute:
+				case compute:
 					return eCompute;
 				}
 				return {};
@@ -84,7 +78,7 @@ export namespace vfw
 				   .pName  = "main",
 			};
 
-			if (stage == shader_stage::compute)
+			if (stage == types::shader_stage::compute)
 			{
 				auto cp_ci = vk::ComputePipelineCreateInfo{
 					.stage  = stage_info,
