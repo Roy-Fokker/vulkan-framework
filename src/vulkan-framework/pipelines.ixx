@@ -9,16 +9,26 @@ import :types;
 
 export namespace vfw
 {
-	class pipeline final
+	auto make_shader_module(vk::Device device, std::span<uint32_t> spv_bin) -> vk::ShaderModule
+	{
+		auto ci = vk::ShaderModuleCreateInfo{
+			.codeSize = spv_bin.size(),
+			.pCode    = spv_bin.data(),
+		};
+
+		return device.createShaderModule(ci);
+	}
+
+	class compute_pipeline final
 	{
 	public:
-		pipeline()                               = delete;
-		pipeline(const pipeline &src)            = delete;
-		pipeline &operator=(const pipeline &src) = delete;
-		pipeline(pipeline &&src)                 = delete;
-		pipeline &operator=(pipeline &&src)      = delete;
+		compute_pipeline()                                       = delete;
+		compute_pipeline(const compute_pipeline &src)            = delete;
+		compute_pipeline &operator=(const compute_pipeline &src) = delete;
+		compute_pipeline(compute_pipeline &&src)                 = delete;
+		compute_pipeline &operator=(compute_pipeline &&src)      = delete;
 
-		pipeline(vk::Device device, vk::DescriptorSetLayout &set_layout)
+		compute_pipeline(vk::Device device, vk::DescriptorSetLayout &set_layout)
 			: device(device)
 		{
 			auto pc_rng = vk::PushConstantRange{
@@ -37,7 +47,7 @@ export namespace vfw
 			layout = device.createPipelineLayout(pl_ci);
 		}
 
-		~pipeline()
+		~compute_pipeline()
 		{
 			device.waitIdle();
 
@@ -47,15 +57,6 @@ export namespace vfw
 
 		void add_shader(types::shader_stage stage, std::span<uint32_t> data)
 		{
-			auto make_shader_module = [&](std::span<uint32_t> shader_bin) {
-				auto ci = vk::ShaderModuleCreateInfo{
-					.codeSize = shader_bin.size(),
-					.pCode    = shader_bin.data(),
-				};
-
-				return device.createShaderModule(ci);
-			};
-
 			auto translate_to_vk_flage = [](types::shader_stage stage) -> vk::ShaderStageFlagBits {
 				using enum vk::ShaderStageFlagBits;
 				switch (stage)
@@ -71,7 +72,7 @@ export namespace vfw
 				return {};
 			};
 
-			auto shader_module = make_shader_module(data);
+			auto shader_module = make_shader_module(device, data);
 			auto stage_info    = vk::PipelineShaderStageCreateInfo{
 				   .stage  = translate_to_vk_flage(stage),
 				   .module = shader_module,

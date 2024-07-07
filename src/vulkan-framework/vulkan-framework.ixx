@@ -69,8 +69,6 @@ export namespace vfw
 			create_descriptor_layout();
 			create_descriptors();
 
-			pl = std::make_unique<pipeline>(device, rndr_img_desc_layout);
-
 			push_constants = types::compute_push_constants{
 				.data1 = { 0.8f, 0.8f, 0.f, 1.f },
 				.data2 = { 0.0f, 0.4f, 0.8f, 1.f },
@@ -122,9 +120,12 @@ export namespace vfw
 			}
 		}
 
-		void add_shader(shader_stage stage, std::span<uint32_t> data)
+		void add_compute_shader(shader_stage stage, std::span<uint32_t> data)
 		{
-			pl->add_shader(stage, data);
+			auto device = ctx->get_device();
+			compute_pl  = std::make_unique<compute_pipeline>(device, rndr_img_desc_layout);
+
+			compute_pl->add_shader(stage, data);
 		}
 
 		void draw()
@@ -220,7 +221,7 @@ export namespace vfw
 
 		void draw_on_image(vk::CommandBuffer &cb, [[maybe_unused]] vk::Image &image)
 		{
-			if (not pl)
+			if (not compute_pl)
 			{
 				return;
 			}
@@ -232,14 +233,14 @@ export namespace vfw
 
 			// clear_image(cb, image, clear_value);
 
-			cb.bindPipeline(vk::PipelineBindPoint::eCompute, pl->get_pipeline());
+			cb.bindPipeline(vk::PipelineBindPoint::eCompute, compute_pl->get_pipeline());
 
-			cb.bindDescriptorSets(vk::PipelineBindPoint::eCompute, pl->get_layout(), 0, rndr_img_descriptor, nullptr);
+			cb.bindDescriptorSets(vk::PipelineBindPoint::eCompute, compute_pl->get_layout(), 0, rndr_img_descriptor, nullptr);
 
 			// TODO: figure out why below commented lines cause ICE.
 			// auto pc   = std::array{ push_constants };
-			// cb.pushConstants<types::compute_push_constants>(pl->get_layout(), vk::ShaderStageFlagBits::eCompute, 0, pc);
-			vkCmdPushConstants(cb, pl->get_layout(), (VkShaderStageFlags)vk::ShaderStageFlagBits::eCompute, 0, sizeof(types::compute_push_constants), &push_constants);
+			// cb.pushConstants<types::compute_push_constants>(compute_pl->get_layout(), vk::ShaderStageFlagBits::eCompute, 0, pc);
+			vkCmdPushConstants(cb, compute_pl->get_layout(), (VkShaderStageFlags)vk::ShaderStageFlagBits::eCompute, 0, sizeof(types::compute_push_constants), &push_constants);
 
 			auto [width, height] = rndr_img->get_size();
 			auto grp_width       = static_cast<uint32_t>(std::ceil(width / 16.0f)),
@@ -259,7 +260,7 @@ export namespace vfw
 		vk::DescriptorSetLayout rndr_img_desc_layout;
 		vk::DescriptorSet rndr_img_descriptor;
 
-		std::unique_ptr<pipeline> pl{ nullptr };
+		std::unique_ptr<compute_pipeline> compute_pl{ nullptr };
 
 		types::compute_push_constants push_constants{};
 

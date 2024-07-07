@@ -113,14 +113,15 @@ export namespace app_base
 
 		void setup_pipeline()
 		{
-			// Basic Shaders
+			// Basic Compute Shaders
 			// auto comp_hlslshader_bin = read_file("shaders/basic_compute.hlsl.spv");
 			// auto comp_glslshader_bin = read_file("shaders/basic_compute.comp.spv");
-			// Push Constant Shaders
+
+			// Push Constant Compute Shaders
 			auto comp_hlslshader_bin = read_file("shaders/push_const_compute.hlsl.spv");
 			auto comp_glslshader_bin = read_file("shaders/push_const_compute.comp.spv");
 
-			renderer->add_shader(vfw::types::shader_stage::compute, comp_hlslshader_bin);
+			renderer->add_compute_shader(vfw::types::shader_stage::compute, comp_hlslshader_bin);
 		}
 
 		void setup_model()
