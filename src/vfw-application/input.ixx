@@ -463,7 +463,7 @@ export namespace win32
 
 		auto is_button_down(input_button button) const -> bool
 		{
-			return buttons_down.at(static_cast<uint8_t>(button));
+			return buttons_down.test(static_cast<uint8_t>(button));
 		}
 
 		auto get_axis_value(input_axis axis, bool absolute = false) const -> std::int32_t
@@ -510,7 +510,7 @@ export namespace win32
 
 		alignas(8) std::array<RAWINPUT, 128> input_buffer{};
 
-		std::array<bool, 256> buttons_down{};
+		std::bitset<256> buttons_down{};
 		std::array<std::int32_t, 5> axis_values_relative{};
 		std::array<std::int32_t, 5> axis_values_absolute{};
 	};
