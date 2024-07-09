@@ -142,7 +142,7 @@ export namespace app_base
 			if (input.is_button_down(escape))
 			{
 				stop_app = true;
-				std::println("⌚: {:>5.2f}s, ⏱️: {}ns, ⌨️: {:10.10}",
+				std::println("⌚: {:>5.2f}s, ⏱️: {}s, ⌨️: {:10.10}",
 				             tt, dt, win32::to_string(escape));
 			}
 		}
@@ -154,7 +154,7 @@ export namespace app_base
 
 		auto on_resize(std::uint16_t width, std::uint16_t height) -> bool
 		{
-			std::println("⌚: {:>5.2f}s, ⏱️: {}ns, Width: {:>5}, Height: {:>5}",
+			std::println("⌚: {:>5.2f}s, ⏱️: {}s, Width: {:>5}, Height: {:>5}",
 			             tt, dt, width, height);
 
 			window_size = { width, height };
