@@ -22,4 +22,33 @@ export namespace vfw::types
 		pixel,
 		compute,
 	};
+
+	auto to_vk_flag(shader_stage stage) -> vk::ShaderStageFlagBits
+	{
+		switch (stage)
+		{
+			using enum vk::ShaderStageFlagBits;
+			using enum types::shader_stage;
+		case vertex:
+			return eVertex;
+		case pixel:
+			return eFragment;
+		case compute:
+			return eCompute;
+		}
+		return {};
+	}
+
+	struct shader_module
+	{
+		shader_stage stage;
+		vk::ShaderModule shdr;
+	};
+
+	enum class blending_mode
+	{
+		none,
+		additive,
+		alpha_blend,
+	};
 }

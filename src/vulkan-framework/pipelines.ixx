@@ -57,24 +57,9 @@ export namespace vfw
 
 		void add_shader(types::shader_stage stage, std::span<uint32_t> data)
 		{
-			auto translate_to_vk_flage = [](types::shader_stage stage) -> vk::ShaderStageFlagBits {
-				using enum vk::ShaderStageFlagBits;
-				switch (stage)
-				{
-					using enum types::shader_stage;
-				case vertex:
-					return eVertex;
-				case pixel:
-					return eFragment;
-				case compute:
-					return eCompute;
-				}
-				return {};
-			};
-
 			auto shader_module = make_shader_module(device, data);
 			auto stage_info    = vk::PipelineShaderStageCreateInfo{
-				   .stage  = translate_to_vk_flage(stage),
+				   .stage  = types::to_vk_flag(stage),
 				   .module = shader_module,
 				   .pName  = "main",
 			};
