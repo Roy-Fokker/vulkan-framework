@@ -69,10 +69,12 @@ export namespace vfw
 			create_descriptor_layout();
 			create_descriptors();
 
-			push_constants = types::compute_push_constants{
+			compute_pc = types::compute_push_constants{
 				.data1 = { 0.8f, 0.8f, 0.f, 1.f },
 				.data2 = { 0.0f, 0.4f, 0.8f, 1.f },
 			};
+
+			create_viewport_scissor(width, height);
 		}
 
 		~renderer()
@@ -240,7 +242,7 @@ export namespace vfw
 			// TODO: figure out why below commented lines cause ICE.
 			// auto pc   = std::array{ push_constants };
 			// cb.pushConstants<types::compute_push_constants>(compute_pl->get_layout(), vk::ShaderStageFlagBits::eCompute, 0, pc);
-			vkCmdPushConstants(cb, compute_pl->get_layout(), (VkShaderStageFlags)vk::ShaderStageFlagBits::eCompute, 0, sizeof(types::compute_push_constants), &push_constants);
+			vkCmdPushConstants(cb, compute_pl->get_layout(), (VkShaderStageFlags)vk::ShaderStageFlagBits::eCompute, 0, sizeof(types::compute_push_constants), &compute_pc);
 
 			auto [width, height] = rndr_img->get_size();
 			auto grp_width       = static_cast<uint32_t>(std::ceil(width / 16.0f)),
@@ -261,6 +263,8 @@ export namespace vfw
 		vk::DescriptorSet rndr_img_descriptor;
 
 		std::unique_ptr<compute_pipeline> compute_pl{ nullptr };
+		types::compute_push_constants compute_pc{};
+
 
 		types::compute_push_constants push_constants{};
 
