@@ -13,7 +13,11 @@ target_shader_sources(${PRJ_SHDR_LIB_NAME}
 	GLSL
 		basic_compute.comp
 		push_const_compute.comp
+		basic_triangle.vert
+		basic_triangle.frag
 	HLSL
 		basic_compute.hlsl : cs_6_4
 		push_const_compute.hlsl : cs_6_4
+		basic_triangle.vs.hlsl : vs_6_4
+		basic_triangle.ps.hlsl : ps_6_4
 )
