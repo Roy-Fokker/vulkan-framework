@@ -122,6 +122,10 @@ export namespace app_base
 			auto comp_glslshader_bin = read_file("shaders/push_const_compute.comp.spv");
 
 			renderer->add_compute_shader(vfw::types::shader_stage::compute, comp_hlslshader_bin);
+
+			// Basic Vertex and Pixel Shaders
+			auto vert_glslshader_bin = read_file("shader/basic_triangle.vert.spv");
+			auto frag_glslshader_bin = read_file("shader/basic_triangle.frag.spv");
 		}
 
 		void setup_model()
