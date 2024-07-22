@@ -105,6 +105,7 @@ export namespace vfw
 															 .format = vk::Format::eR16G16B16A16Sfloat,
 														 });
 			create_descriptors();
+			create_viewport_scissor(width, height);
 
 			// TODO: would frame count changed because of window resize??
 			// should never happen.
@@ -197,6 +198,29 @@ export namespace vfw
 			device.destroyDescriptorSetLayout(rndr_img_desc_layout);
 		}
 
+		void create_viewport_scissor(uint16_t width, uint16_t height)
+		{
+			viewport = vk::Viewport{
+				.x        = 0,
+				.y        = 0,
+				.width    = static_cast<float>(width),
+				.height   = static_cast<float>(height),
+				.minDepth = 0.f,
+				.maxDepth = 1.f,
+			};
+
+			scissor = vk::Rect2D{
+				.offset = {
+					.x = 0,
+					.y = 0,
+				},
+				.extent = {
+					.width  = width,
+					.height = height,
+				},
+			};
+		}
+
 		void record_command_buffer(vk::CommandBuffer &cb, uint32_t image_index)
 		{
 			cb.reset();
@@ -208,8 +232,12 @@ export namespace vfw
 			auto img_size = rndr_img->get_size();
 
 			transition_image(cb, image, vk::ImageLayout::eUndefined, vk::ImageLayout::eGeneral);
-			draw_on_image(cb, image);
-			transition_image(cb, image, vk::ImageLayout::eGeneral, vk::ImageLayout::eTransferSrcOptimal);
+			draw_background(cb, image);
+
+			transition_image(cb, image, vk::ImageLayout::eGeneral, vk::ImageLayout::eColorAttachmentOptimal);
+			draw_geometry(cb, image);
+
+			transition_image(cb, image, vk::ImageLayout::eColorAttachmentOptimal, vk::ImageLayout::eTransferSrcOptimal);
 
 			auto sc_image = sc->get_image(image_index);
 			auto sc_size  = sc->get_size();
@@ -221,17 +249,17 @@ export namespace vfw
 			cb.end();
 		}
 
-		void draw_on_image(vk::CommandBuffer &cb, [[maybe_unused]] vk::Image &image)
+		void draw_background(vk::CommandBuffer &cb, [[maybe_unused]] vk::Image &image)
 		{
 			if (not compute_pl)
 			{
 				return;
 			}
 
-			auto clear_color = std::array{ 0.4f, 0.5f, 0.4f, 1.0f };
-			auto clear_value = vk::ClearValue{
-				.color = clear_color,
-			};
+			// auto clear_color = std::array{ 0.4f, 0.5f, 0.4f, 1.0f };
+			// auto clear_value = vk::ClearValue{
+			// 	.color = clear_color,
+			// };
 
 			// clear_image(cb, image, clear_value);
 
@@ -250,23 +278,33 @@ export namespace vfw
 			cb.dispatch(grp_width, grp_height, 1);
 		}
 
+		void draw_geometry(vk::CommandBuffer &cb, [[maybe_unused]] vk::Image &image)
+		{
+			if (not graphics_pl)
+			{
+				return;
+			}
+		}
+
 	private:
 		std::unique_ptr<context> ctx{ nullptr };
 		std::unique_ptr<swapchain> sc{ nullptr };
 		std::unique_ptr<commandpool> cp{ nullptr };
 		std::unique_ptr<frame_sync> fs{ nullptr };
 
-		std::unique_ptr<allocated_image> rndr_img{ nullptr };
-
 		std::unique_ptr<descriptor_allocator> da{ nullptr };
+
+		std::unique_ptr<allocated_image> rndr_img{ nullptr };
 		vk::DescriptorSetLayout rndr_img_desc_layout;
 		vk::DescriptorSet rndr_img_descriptor;
 
 		std::unique_ptr<compute_pipeline> compute_pl{ nullptr };
 		types::compute_push_constants compute_pc{};
 
+		vk::Viewport viewport{};
+		vk::Rect2D scissor{};
 
-		types::compute_push_constants push_constants{};
+		std::unique_ptr<graphics_pipeline> graphics_pl{ nullptr };
 
 		uint32_t max_frame_count = 0;
 		uint32_t current_frame   = 0;
